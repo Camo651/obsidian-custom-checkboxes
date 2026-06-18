@@ -42,16 +42,28 @@ export class SettingsStore {
 		persist: Persist,
 		debounceMs?: number,
 	): SettingsStore {
-		const merged = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(raw as Partial<CustomCheckboxesSettings>) ?? {},
-		) as CustomCheckboxesSettings;
+		// Object.assign with DEFAULT_SETTINGS first means any keys we no
+		// longer support (e.g. legacy `iconSize`) survive the merge if
+		// present in saved data. Reconstructing only the keys the current
+		// schema knows about drops them silently.
+		const incoming = (raw as Partial<CustomCheckboxesSettings>) ?? {};
+		const merged: CustomCheckboxesSettings = {
+			variants: incoming.variants ?? DEFAULT_SETTINGS.variants,
+			defaultCheckedCharacter:
+				incoming.defaultCheckedCharacter ??
+				DEFAULT_SETTINGS.defaultCheckedCharacter,
+			enableReadingView:
+				incoming.enableReadingView ??
+				DEFAULT_SETTINGS.enableReadingView,
+			enableLivePreview:
+				incoming.enableLivePreview ??
+				DEFAULT_SETTINGS.enableLivePreview,
+		};
 		// Migrate variants: ensure every variant has a stable id, normalize
 		// characters, drop any legacy fields (older versions of the plugin
 		// supported `mediaKind: "image"` with an `imagePath` — those fields
 		// are silently dropped here).
-		merged.variants = (merged.variants ?? []).map((v) => ({
+		merged.variants = merged.variants.map((v) => ({
 			id: v.id ?? makeId(),
 			character: normalizeChar(v.character),
 			name: v.name ?? "",

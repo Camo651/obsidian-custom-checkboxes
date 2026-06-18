@@ -1,6 +1,7 @@
 import { type CSSProperties } from "react";
 import { Notice } from "obsidian";
 import {
+	DEFAULT_SETTINGS,
 	DEFAULT_SVG_CHECK,
 	type CheckboxVariant,
 	type CustomCheckboxesSettings,
@@ -18,8 +19,12 @@ const variantListStyle: CSSProperties = {
 	marginTop: "1rem",
 };
 
-const addButtonWrapStyle: CSSProperties = {
+const variantActionsStyle: CSSProperties = {
 	marginTop: "1rem",
+	display: "flex",
+	gap: "0.5rem",
+	alignItems: "center",
+	flexWrap: "wrap",
 };
 
 /** Top-level settings view. Reads/writes through the SettingsStore so any
@@ -74,25 +79,26 @@ export function SettingsView() {
 			],
 		}));
 
+	const resetVariants = () => {
+		// Destructive — confirm before nuking the user's customizations.
+		// `window.confirm` is sufficient here; a custom Modal would be
+		// overkill for a settings panel action.
+		const ok = window.confirm(
+			"Reset all variants to defaults? Your current variant list will be replaced.",
+		);
+		if (!ok) return;
+		// Shallow-clone each default variant so future edits don't mutate
+		// the DEFAULT_SETTINGS constant.
+		update((s) => ({
+			...s,
+			variants: DEFAULT_SETTINGS.variants.map((v) => ({ ...v })),
+		}));
+		new Notice("Variants reset to defaults.");
+	};
+
 	return (
 		<div className="ccb-settings">
 			<h2>Custom Checkboxes</h2>
-
-			<SettingItem
-				name="Icon size"
-				desc="CSS length for the rendered checkbox icon. Examples: '1.15em', '18px'."
-			>
-				<input
-					type="text"
-					value={settings.iconSize}
-					onChange={(e) =>
-						update((s) => ({
-							...s,
-							iconSize: e.target.value.trim() || "1.15em",
-						}))
-					}
-				/>
-			</SettingItem>
 
 			<SettingItem
 				name="Default 'checked' character"
@@ -158,9 +164,12 @@ export function SettingsView() {
 				))}
 			</div>
 
-			<div style={addButtonWrapStyle}>
+			<div style={variantActionsStyle}>
 				<button className="mod-cta" onClick={addVariant}>
 					Add variant
+				</button>
+				<button onClick={resetVariants}>
+					Reset to defaults
 				</button>
 			</div>
 		</div>

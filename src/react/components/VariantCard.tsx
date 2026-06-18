@@ -1,6 +1,5 @@
 import { type CSSProperties } from "react";
 import { type CheckboxVariant } from "../../types";
-import { useSettings } from "../hooks/useSettings";
 import { CheckboxIcon } from "./CheckboxIcon";
 
 interface VariantCardProps {
@@ -75,7 +74,6 @@ export function VariantCard({
 	onMove,
 	onDelete,
 }: VariantCardProps) {
-	const { iconSize } = useSettings();
 	const title =
 		variant.name ||
 		(variant.character ? `[${variant.character}]` : "(unnamed)");
@@ -87,7 +85,6 @@ export function VariantCard({
 					<CheckboxIcon
 						char={variant.character}
 						variant={variant}
-						iconSize={iconSize}
 						interactive={false}
 					/>
 				</div>

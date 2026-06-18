@@ -1,54 +1,30 @@
-import { createElement } from "react";
 import type { MarkdownPostProcessorContext } from "obsidian";
-import { Checkbox } from "../react/components/Checkbox";
-import { mountReact } from "../react/mountReact";
 import type { AppServices } from "../react/contexts";
-import { normalizeChar } from "../utils";
+import { swapInputForCheckbox } from "./swapCheckbox";
 
-/** Reading-view post-processor: replace each native task-list checkbox
- *  with a React-rendered `<Checkbox>`. */
+/**
+ * Reading View integration.
+ *
+ * One-shot: Obsidian calls this post-processor with a freshly-rendered
+ * section of static HTML. We find every native task `<input>` and swap
+ * it for a React-mounted host. The actual swap is shared with the Live
+ * Preview integration — see `swapInputForCheckbox`. This file's job is
+ * just shaping a `reading` IconTarget for each input.
+ */
 export function processReadingView(
 	services: AppServices,
 	el: HTMLElement,
 	ctx: MarkdownPostProcessorContext,
 ): void {
-	const inputs = Array.from(
-		el.querySelectorAll<HTMLInputElement>(
-			"input.task-list-item-checkbox",
-		),
+	const inputs = el.querySelectorAll<HTMLInputElement>(
+		"input.task-list-item-checkbox",
 	);
-	if (inputs.length === 0) return;
-
 	inputs.forEach((input) => {
-		const li = input.closest(
-			"li.task-list-item",
-		) as HTMLElement | null;
-		// Obsidian's reading view often puts `data-task` on the parent
-		// <li> rather than on the <input>. Fall through both, then to
-		// the input's checked state.
-		const rawChar =
-			input.getAttribute("data-task") ??
-			li?.getAttribute("data-task") ??
-			(input.checked ? "x" : "");
-		const char = normalizeChar(rawChar);
-
-		const host = document.createElement("span");
-		host.style.display = "contents";
-
-		mountReact(
-			host,
-			services,
-			createElement(Checkbox, {
-				initialChar: char,
-				target: {
-					kind: "reading",
-					ctx,
-					el,
-					targetEl: host,
-				},
-			}),
-		);
-
-		input.replaceWith(host);
+		swapInputForCheckbox(input, services, (host) => ({
+			kind: "reading",
+			ctx,
+			el,
+			targetEl: host,
+		}));
 	});
 }

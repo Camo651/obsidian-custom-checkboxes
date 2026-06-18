@@ -1,66 +1,26 @@
-/* ============================================================
- * Custom Checkboxes — runtime styles
- *
- * Most styling lives inline (via React `style` props) on the
- * component that owns it. The rules below are the cases where
- * inline styles can't reach:
- *
- *   1. SVGs injected via `dangerouslySetInnerHTML` — we can't set
- *      attributes on the resulting <svg> element from React, so
- *      sizing rules are applied through a CSS descendant selector.
- *
- *   2. Classes toggled imperatively from React onto DOM nodes
- *      that aren't part of our React tree (CodeMirror's `.cm-line`,
- *      Obsidian's task `<li>`, Obsidian's native task input).
- *
- *   3. `@keyframes` definitions referenced by inline `animation`
- *      shorthand — the keyframes themselves must live in CSS.
- * ============================================================ */
-
-/* (1) SVG sizing for any svg rendered through <SafeSvg>. The wrapper
- *     uses display:contents so the svg becomes a layout child of the
- *     surrounding component, sized to fill it. */
-.ccb-svg-host > svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
-}
-
-/* (2) Completed-state styling — applied to the parent line/li from React
- *     via classList.toggle when a variant is configured as
- *     "mark as completed". Those parents are owned by Obsidian /
- *     CodeMirror, not by us, so we use a class instead of inline styles. */
 .ccb-completed-line {
   text-decoration: line-through;
   color: var(--text-muted);
 }
 
-/* (2) Reset Obsidian's default checked-task styling so it doesn't
- *     conflict with `.ccb-completed-line`. */
 .markdown-rendered li.task-list-item.is-checked {
   text-decoration: none;
   color: inherit;
 }
 
-/* (2) In Live Preview, Obsidian's task widget renders native
- *     <input class="task-list-item-checkbox"> elements that we then
- *     swap out via a MutationObserver. The swap is asynchronous, so
- *     for one frame after CodeMirror re-renders a task line the
- *     native input is briefly visible. Hide it (preserving its hit
- *     area / size) so the user sees blank space rather than a default
- *     checkbox flashing on every toggle. */
+.task-list-label {
+  padding-left: 0.5em !important;
+  padding-right: 0.2em !important;
+}
+
 .cm-content input.task-list-item-checkbox {
   visibility: hidden;
-  width: 1.15em;
-  height: 1.15em;
+  width: 1em;
+  height: 1em;
   pointer-events: none;
   margin: 0;
 }
 
-/* (3) Entrance animation for the variant menu. The `animation`
- *     shorthand is set inline on the menu element — only the keyframes
- *     need to be defined here. */
 @keyframes ccb-menu-in {
   from {
     opacity: 0;

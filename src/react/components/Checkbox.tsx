@@ -69,12 +69,5 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 		},
 	});
 
-	return (
-		<CheckboxIcon
-			ref={ref}
-			char={char}
-			variant={variant}
-			iconSize={settings.iconSize}
-		/>
-	);
+	return <CheckboxIcon ref={ref} char={char} variant={variant} />;
 }

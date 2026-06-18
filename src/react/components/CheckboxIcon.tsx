@@ -8,16 +8,21 @@ import { SafeSvg } from "./SafeSvg";
 interface CheckboxIconProps {
 	char: string;
 	variant: CheckboxVariant | undefined;
-	iconSize: string;
 	/** Set to `false` for the static preview swatch in settings. */
 	interactive?: boolean;
 }
 
+/** The icon is sized to follow the surrounding text size — `1em` square,
+ *  baseline-aligned via `text-top`. This is intentionally hardcoded:
+ *  letting users tune it produced inconsistent rows where one variant
+ *  visually "popped" relative to the others. */
 const baseStyle: CSSProperties = {
 	display: "inline-flex",
 	alignItems: "center",
 	justifyContent: "center",
 	verticalAlign: "text-top",
+	width: "1em",
+	height: "1em",
 	cursor: "pointer",
 	userSelect: "none",
 	WebkitUserSelect: "none",
@@ -37,10 +42,7 @@ const fallbackStyle: CSSProperties = {
 /** Pure presentational icon. Knows nothing about interactions, services,
  *  or document state — given a character + variant, it renders. */
 export const CheckboxIcon = forwardRef<HTMLSpanElement, CheckboxIconProps>(
-	function CheckboxIcon(
-		{ char, variant, iconSize, interactive = true },
-		ref,
-	) {
+	function CheckboxIcon({ char, variant, interactive = true }, ref) {
 		const ariaChecked: "true" | "false" | "mixed" = variant?.completed
 			? "true"
 			: char
@@ -49,8 +51,6 @@ export const CheckboxIcon = forwardRef<HTMLSpanElement, CheckboxIconProps>(
 
 		const style: CSSProperties = {
 			...baseStyle,
-			width: iconSize,
-			height: iconSize,
 			color: variant?.color || baseStyle.color,
 			...(interactive ? null : previewOverrides),
 		};
