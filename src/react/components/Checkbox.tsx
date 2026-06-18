@@ -53,13 +53,14 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 			setChar(next);
 			await checkboxService.writeChar(target, next);
 		},
-		onOpenMenu: async (ev) => {
+		onOpenMenu: async (ev, dragMode) => {
 			const current = await checkboxService.readChar(target);
 			if (current == null) return;
 			menuService.open({
 				clientX: ev.clientX,
 				clientY: ev.clientY,
 				currentChar: current,
+				dragMode,
 				onSelect: (next) => {
 					setChar(next);
 					void checkboxService.writeChar(target, next);

@@ -4,6 +4,11 @@ export interface MenuRequest {
 	clientX: number;
 	clientY: number;
 	currentChar: string;
+	/** True when the menu is being opened mid-gesture (a long-press on the
+	 *  checkbox where the user hasn't lifted the pointer yet). The menu
+	 *  uses this to enable drag-to-select: pointermove highlights the item
+	 *  under the cursor, pointerup selects it. */
+	dragMode?: boolean;
 	onSelect: (char: string) => void;
 }
 

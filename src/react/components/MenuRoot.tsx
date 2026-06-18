@@ -17,6 +17,7 @@ export function MenuRoot() {
 			clientX={request.clientX}
 			clientY={request.clientY}
 			currentChar={request.currentChar}
+			dragMode={request.dragMode}
 			onSelect={request.onSelect}
 			onClose={menu.close}
 		/>

@@ -3,7 +3,13 @@ import { LONG_PRESS_MS } from "../../types";
 
 interface CheckboxInteractionCallbacks {
 	onShortClick: (ev: MouseEvent) => void;
-	onOpenMenu: (ev: MouseEvent | PointerEvent) => void;
+	/** Open the variant menu. `dragMode` is true when the gesture began
+	 *  with a long-press and the pointer is still down — the menu uses
+	 *  this to enable drag-to-select. */
+	onOpenMenu: (
+		ev: MouseEvent | PointerEvent,
+		dragMode: boolean,
+	) => void;
 }
 
 /**
@@ -63,7 +69,7 @@ export function useCheckboxInteractions(
 			}
 			timer = window.setTimeout(() => {
 				longPressFired = true;
-				cbRef.current.onOpenMenu(ev);
+				cbRef.current.onOpenMenu(ev, true);
 			}, LONG_PRESS_MS);
 		};
 
@@ -80,7 +86,7 @@ export function useCheckboxInteractions(
 				return;
 			}
 			if (ev.shiftKey) {
-				cbRef.current.onOpenMenu(ev);
+				cbRef.current.onOpenMenu(ev, false);
 				return;
 			}
 			cbRef.current.onShortClick(ev);
@@ -89,7 +95,7 @@ export function useCheckboxInteractions(
 		const onContextMenu = (ev: MouseEvent) => {
 			swallow(ev);
 			clear();
-			cbRef.current.onOpenMenu(ev);
+			cbRef.current.onOpenMenu(ev, false);
 		};
 
 		// Block any other event Obsidian / CodeMirror might use to toggle

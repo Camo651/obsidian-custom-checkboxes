@@ -15,6 +15,11 @@ interface VariantMenuProps {
 	clientX: number;
 	clientY: number;
 	currentChar: string;
+	/** True when the menu was opened mid-gesture (long-press on a
+	 *  checkbox where the pointer is still down). Enables drag-to-select:
+	 *  pointermove highlights the row under the cursor, pointerup picks
+	 *  it. */
+	dragMode?: boolean;
 	onSelect: (char: string) => void;
 	onClose: () => void;
 }
@@ -155,6 +160,7 @@ export function VariantMenu({
 	clientX,
 	clientY,
 	currentChar,
+	dragMode = false,
 	onSelect,
 	onClose,
 }: VariantMenuProps) {
@@ -243,14 +249,77 @@ export function VariantMenu({
 		};
 	}, [onClose]);
 
-	// Latest-state refs so the document-level keydown listener can read
-	// the current rows / focus index without re-attaching every render.
+	// Latest-state refs so the document-level listeners can read the
+	// current rows / focus index without re-attaching every render.
 	const rowsRef = useRef(rows);
 	rowsRef.current = rows;
 	const focusIdxRef = useRef(focusIdx);
 	focusIdxRef.current = focusIdx;
 	const selectRef = useRef(select);
 	selectRef.current = select;
+
+	/* ----------------------------------------------------------------- *
+	 * Drag-to-select.
+	 *
+	 * When the menu is opened by a long-press, the user's pointer is
+	 * still down. We track pointermove globally to highlight the row
+	 * under the cursor and pointerup to commit the selection — this
+	 * matches the macOS / touch UX of "press, drag, release".
+	 *
+	 * Both listeners run at document level with capture so we beat any
+	 * other handler (CodeMirror, Obsidian) to the gesture's end. The
+	 * pointerdown that opened the menu is consumed by the checkbox
+	 * itself; we don't pointer-capture, so subsequent pointer events
+	 * naturally fire on whatever element the cursor is currently over.
+	 * ----------------------------------------------------------------- */
+	useEffect(() => {
+		if (!dragMode) return;
+
+		const findRowAt = (
+			x: number,
+			y: number,
+		): { idx: number; char: string } | null => {
+			const el = document.elementFromPoint(
+				x,
+				y,
+			) as HTMLElement | null;
+			const itemEl = el?.closest<HTMLElement>("[data-ccb-menu-idx]");
+			if (!itemEl) return null;
+			const idx = parseInt(itemEl.dataset.ccbMenuIdx ?? "", 10);
+			if (Number.isNaN(idx)) return null;
+			const row = rowsRef.current[idx];
+			if (!row) return null;
+			return { idx, char: row.char };
+		};
+
+		const onPointerMove = (e: PointerEvent) => {
+			const hit = findRowAt(e.clientX, e.clientY);
+			if (hit) setFocusIdx(hit.idx);
+		};
+
+		const onPointerUp = (e: PointerEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+			const hit = findRowAt(e.clientX, e.clientY);
+			if (hit) {
+				selectRef.current(hit.char);
+			} else {
+				onClose();
+			}
+		};
+
+		document.addEventListener("pointermove", onPointerMove, true);
+		document.addEventListener("pointerup", onPointerUp, true);
+		return () => {
+			document.removeEventListener(
+				"pointermove",
+				onPointerMove,
+				true,
+			);
+			document.removeEventListener("pointerup", onPointerUp, true);
+		};
+	}, [dragMode, onClose]);
 
 	/* ----------------------------------------------------------------- *
 	 * Keyboard handling.
@@ -385,6 +454,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuItem(
 			ref={ref}
 			role="menuitem"
 			tabIndex={-1}
+			data-ccb-menu-idx={index}
 			onMouseMove={onHover}
 			onClick={(e) => {
 				e.preventDefault();
