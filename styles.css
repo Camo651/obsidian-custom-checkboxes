@@ -1,16 +1,43 @@
-.ccb-completed-line {
+/* Completed-line styling derived from the React-owned `.ccb-checkbox`.
+ * We can't toggle a class on the parent .cm-line / <li> imperatively
+ * because CodeMirror recreates / moves line nodes on cursor and
+ * viewport changes; using :has() lets the browser re-evaluate the
+ * selector automatically every time the DOM tree changes.
+ *
+ * For reading view we restrict the match to non-list direct children
+ * of the li (so a completed nested task in a sublist doesn't make its
+ * parent task line look completed too — each nested task lives in its
+ * own li and is matched by its own selector instance). The `:not(ul)
+ * :not(ol)` filter keeps us from descending through the sublist.
+ *
+ * Live Preview puts each task on its own `.cm-line`, so a simple
+ * descendant match is correct and there's no over-match risk. */
+.cm-line:has(.ccb-checkbox[aria-checked="true"]),
+.markdown-rendered li.task-list-item:has(> :not(ul):not(ol) .ccb-checkbox[aria-checked="true"]) {
   text-decoration: line-through;
   color: var(--text-muted);
 }
 
+/* Suppress Obsidian's default strikethrough for `[x]` in reading view
+ * — we apply our own based on the variant's `completed` flag, so this
+ * stays consistent with `[-]`, `[?]`, etc. */
 .markdown-rendered li.task-list-item.is-checked {
   text-decoration: none;
   color: inherit;
 }
 
+/* Live Preview spacing — Obsidian's HyperMD wraps the checkbox in a
+ * `.task-list-label` element. */
 .task-list-label {
   padding-left: 0.5em !important;
   padding-right: 0.2em !important;
+}
+
+/* Reading view spacing — there's no `.task-list-label` here, the
+ * checkbox is a direct (or near-direct) child of the `<li>`. Add a
+ * margin so the icon doesn't sit flush against the task text. */
+.markdown-rendered li.task-list-item .ccb-checkbox {
+  margin-right: 0.4em;
 }
 
 .cm-content input.task-list-item-checkbox {

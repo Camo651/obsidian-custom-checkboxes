@@ -1,6 +1,6 @@
 import type { MarkdownPostProcessorContext } from "obsidian";
 import type { AppServices } from "../react/contexts";
-import { swapInputForCheckbox } from "./swapCheckbox";
+import { readReadingChar, swapInputForCheckbox } from "./swapCheckbox";
 
 /**
  * Reading View integration.
@@ -9,7 +9,8 @@ import { swapInputForCheckbox } from "./swapCheckbox";
  * section of static HTML. We find every native task `<input>` and swap
  * it for a React-mounted host. The actual swap is shared with the Live
  * Preview integration — see `swapInputForCheckbox`. This file's job is
- * just shaping a `reading` IconTarget for each input.
+ * shaping a `reading` IconTarget and reading the marker char from the
+ * static HTML (`data-task`).
  */
 export function processReadingView(
 	services: AppServices,
@@ -20,11 +21,17 @@ export function processReadingView(
 		"input.task-list-item-checkbox",
 	);
 	inputs.forEach((input) => {
-		swapInputForCheckbox(input, services, (host) => ({
-			kind: "reading",
-			ctx,
-			el,
-			targetEl: host,
-		}));
+		const initialChar = readReadingChar(input);
+		swapInputForCheckbox(
+			input,
+			services,
+			initialChar,
+			(host) => ({
+				kind: "reading",
+				ctx,
+				el,
+				targetEl: host,
+			}),
+		);
 	});
 }

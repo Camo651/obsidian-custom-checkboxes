@@ -5,7 +5,7 @@ import {
 	type ViewUpdate,
 } from "@codemirror/view";
 import type { AppServices } from "../react/contexts";
-import { swapInputForCheckbox } from "./swapCheckbox";
+import { readLiveChar, swapInputForCheckbox } from "./swapCheckbox";
 
 /**
  * Live Preview integration.
@@ -89,23 +89,35 @@ export function buildLivePreviewExtension(services: AppServices) {
 
 			private replaceOne(input: HTMLInputElement): void {
 				const view = this.view;
-				swapInputForCheckbox(input, services, (host) => ({
-					kind: "live",
-					view,
-					// Resolve the line number lazily from the host's
-					// live DOM position so it stays correct even when
-					// the user inserts / deletes lines above. Capturing
-					// the line number at swap time produces a
-					// stale-closure bug.
-					getLineNumber: () => {
-						try {
-							const pos = view.posAtDOM(host);
-							return view.state.doc.lineAt(pos).number;
-						} catch {
-							return null;
-						}
-					},
-				}));
+				// Read the char from the doc, not from the input —
+				// Obsidian's task widget doesn't set `data-task` for
+				// non-standard markers in Live Preview, so trusting the
+				// input would produce the wrong char on re-render and
+				// silently strip completed-line styling.
+				const initialChar = readLiveChar(input, view);
+				swapInputForCheckbox(
+					input,
+					services,
+					initialChar,
+					(host) => ({
+						kind: "live",
+						view,
+						// Resolve the line number lazily from the host's
+						// live DOM position so it stays correct even
+						// when the user inserts / deletes lines above.
+						// Capturing the line number at swap time
+						// produces a stale-closure bug.
+						getLineNumber: () => {
+							try {
+								const pos = view.posAtDOM(host);
+								return view.state.doc.lineAt(pos)
+									.number;
+							} catch {
+								return null;
+							}
+						},
+					}),
+				);
 			}
 		},
 	);

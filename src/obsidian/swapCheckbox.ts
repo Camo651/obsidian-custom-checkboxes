@@ -1,17 +1,18 @@
 import { createElement } from "react";
+import type { EditorView } from "@codemirror/view";
 import { Checkbox } from "../react/components/Checkbox";
 import { mountReact, type MountedRoot } from "../react/mountReact";
 import type { AppServices } from "../react/contexts";
-import type { IconTarget } from "../types";
+import { TASK_LINE_REGEX, type IconTarget } from "../types";
 import { normalizeChar } from "../utils";
 
-/** Read the bracket character from an Obsidian-rendered task `<input>`.
- *  Falls through `data-task` on the input, then on its parent `<li>`
- *  (Reading view sometimes only sets it there), then to the input's
- *  `checked` state. The fallbacks are no-ops in Live Preview (no `<li>`
- *  ancestor, `checked` not used by CodeMirror's task widget), so the same
- *  function works for both call sites. */
-export function readCharFromInput(input: HTMLInputElement): string {
+/** Read the bracket character for a Reading-view task `<input>`.
+ *
+ *  Reading view's static HTML reliably exposes the marker via `data-task`
+ *  on either the input itself or its parent `<li>` (Obsidian's renderer
+ *  picks one depending on version). The `input.checked` fallback is a
+ *  last resort for the `[ ]` / `[x]` baseline. */
+export function readReadingChar(input: HTMLInputElement): string {
 	const li = input.closest<HTMLElement>("li.task-list-item");
 	const raw =
 		input.getAttribute("data-task") ??
@@ -20,35 +21,49 @@ export function readCharFromInput(input: HTMLInputElement): string {
 	return normalizeChar(raw);
 }
 
+/** Read the bracket character for a Live Preview task `<input>`.
+ *
+ *  Crucially, this consults the CodeMirror document — the source of
+ *  truth — rather than the rendered `<input>`'s attributes. Obsidian's
+ *  task widget does not set `data-task` for non-standard markers like
+ *  `[-]`, `[/]`, `[!]`, `[?]` in Live Preview, and `input.checked` is
+ *  only true for `[x]`. Reading from the document avoids the wrong-char
+ *  bug those gaps produce when the line re-renders after a doc change. */
+export function readLiveChar(
+	input: HTMLInputElement,
+	view: EditorView,
+): string {
+	try {
+		const pos = view.posAtDOM(input);
+		const line = view.state.doc.lineAt(pos);
+		const m = TASK_LINE_REGEX.exec(line.text);
+		return m ? normalizeChar(m[2]) : "";
+	} catch {
+		return "";
+	}
+}
+
 /**
  * Replace a native Obsidian task `<input>` with a React-mounted host
- * rendering our `<Checkbox>`. This is the shared core used by both the
- * Live Preview integration (a CodeMirror ViewPlugin + MutationObserver)
- * and the Reading View integration (a Markdown post-processor).
+ * rendering our `<Checkbox>`. Shared between the Live Preview integration
+ * (a CodeMirror ViewPlugin + MutationObserver) and the Reading View
+ * integration (a Markdown post-processor).
  *
- * Those two integrations differ only in:
- *   - HOW they're triggered — they're registered with totally different
- *     Obsidian APIs (`registerEditorExtension` vs
- *     `registerMarkdownPostProcessor`) and have different lifecycles
- *     (continuous vs one-shot).
- *   - WHAT IconTarget they need to build — Live needs a `getLineNumber`
- *     closure over the EditorView; Reading needs the post-processor
- *     `ctx` plus the section element.
+ * Each caller provides:
+ *   - the `initialChar` it pulled from its own source of truth (the doc
+ *     for live, the rendered HTML for reading), and
+ *   - an `IconTarget` factory shaped for its rendering pipeline.
  *
- * The actual swap (read char, build host, mount React, replace input) is
- * identical, and lives here.
+ * The swap itself (build host, mount React, replace input) lives here.
  */
 export function swapInputForCheckbox(
 	input: HTMLInputElement,
 	services: AppServices,
+	initialChar: string,
 	makeTarget: (host: HTMLSpanElement) => IconTarget,
 ): { host: HTMLSpanElement; mount: MountedRoot } {
-	const char = readCharFromInput(input);
-
 	// `display: contents` keeps the host invisible to layout — the
 	// React-rendered `.ccb-checkbox` span becomes the actual flex item.
-	// CSS selectors like `.ccb-checkbox svg` keep working because the svg
-	// is still a descendant.
 	const host = document.createElement("span");
 	host.style.display = "contents";
 
@@ -56,7 +71,7 @@ export function swapInputForCheckbox(
 	const mount = mountReact(
 		host,
 		services,
-		createElement(Checkbox, { initialChar: char, target }),
+		createElement(Checkbox, { initialChar, target }),
 	);
 
 	input.replaceWith(host);

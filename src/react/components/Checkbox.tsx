@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { type IconTarget } from "../../types";
 import { useCheckboxService, useMenuService } from "../contexts";
 import { useSettings, useVariantMap } from "../hooks/useSettings";
@@ -13,9 +13,16 @@ interface CheckboxProps {
 
 /**
  * Container component for a single live checkbox. Wires the icon's
- * interactions to the checkbox + menu services, owns the optimistic
- * character state, and keeps the parent task line's completed-line class
- * in sync.
+ * interactions to the checkbox + menu services and owns the optimistic
+ * character state.
+ *
+ * Completed-line styling (strikethrough on the surrounding `.cm-line` or
+ * `li.task-list-item`) is handled purely in CSS via `:has()` matching on
+ * `.ccb-checkbox[aria-checked="true"]`. We deliberately don't toggle a
+ * class on the parent line imperatively from here: CodeMirror frequently
+ * recreates / moves `.cm-line` nodes when the document or selection
+ * changes, which would orphan any class we placed on the old line node
+ * and silently strip the strikethrough.
  */
 export function Checkbox({ initialChar, target }: CheckboxProps) {
 	const [char, setChar] = useState(initialChar);
@@ -27,22 +34,6 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 	const menuService = useMenuService();
 
 	const variant = variantMap.get(char);
-
-	// Mirror completed-line styling onto the parent line. In live preview
-	// the parent is `.cm-line`; in reading view it's `li.task-list-item`.
-	useEffect(() => {
-		const el = ref.current;
-		if (!el) return;
-		const lineEl =
-			target.kind === "live"
-				? el.closest<HTMLElement>(".cm-line")
-				: el.closest<HTMLElement>("li.task-list-item");
-		if (!lineEl) return;
-		lineEl.classList.toggle(
-			"ccb-completed-line",
-			!!variant?.completed,
-		);
-	}, [variant?.completed, target.kind]);
 
 	useCheckboxInteractions(ref, {
 		onShortClick: async () => {
