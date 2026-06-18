@@ -7,8 +7,10 @@ export interface MountedRoot {
 	unmount(): void;
 }
 
-/** Mount a React tree into `container`, wrapped in our standard providers.
- *  Returns a handle so the caller can unmount when the host is disposed. */
+/**
+ * Mount a React tree into `container`, wrapped in our standard providers.
+ * Returns a handle so the caller can unmount when the host is disposed.
+ */
 export function mountReact(
 	container: Element | DocumentFragment,
 	services: AppServices,

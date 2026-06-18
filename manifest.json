@@ -3,7 +3,7 @@
   "name": "Custom Checkboxes",
   "version": "0.1.0",
   "minAppVersion": "1.0.0",
-  "description": "Configure custom checkbox variants (- [x], - [/], - [?] etc.) and render each one with a custom SVG icon.",
+  "description": "Configure custom checkbox variants with custom SVG icons.",
   "author": "Camo651",
   "authorUrl": "https://github.com/Camo651",
   "isDesktopOnly": false

@@ -6,8 +6,9 @@ interface ProvidersProps {
 	children: ReactNode;
 }
 
-/** Single entry point for wiring contexts around any React subtree we
- *  mount. Every `mountReact` call wraps its content in this. */
+/**
+ * Single entry point for wiring contexts around any React subtree we mount.
+*/
 export function Providers({ services, children }: ProvidersProps) {
 	return (
 		<StrictMode>

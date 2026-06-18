@@ -1,9 +1,7 @@
-import { Editor, Notice, Plugin } from "obsidian";
-import { EditorView } from "@codemirror/view";
+import { Plugin } from "obsidian";
 import { Prec } from "@codemirror/state";
 import { createElement } from "react";
 
-import { type IconTarget, TASK_LINE_REGEX } from "./src/types";
 import { SettingsStore } from "./src/state/SettingsStore";
 import { CheckboxService } from "./src/state/CheckboxService";
 import { MenuService } from "./src/state/MenuService";
@@ -18,9 +16,8 @@ import { processReadingView } from "./src/obsidian/readingView";
 import { CustomCheckboxSettingTab } from "./src/obsidian/settingsTab";
 
 /**
- * Plugin entry point. Owns the lifecycle and wires together services +
- * Obsidian integrations. All UI state and rendering live inside the
- * React tree — this file deliberately contains no business logic.
+ * Plugin entry point. Owns the lifecycle and wires together services + Obsidian integrations.
+ * All UI state and rendering live inside the React tree
  */
 export default class CustomCheckboxesPlugin extends Plugin {
 	private services!: AppServices;
@@ -35,7 +32,6 @@ export default class CustomCheckboxesPlugin extends Plugin {
 			new CustomCheckboxSettingTab(this.app, this, this.services),
 		);
 		this.registerIntegrations();
-		this.registerCommands();
 	}
 
 	async onunload() {
@@ -46,10 +42,9 @@ export default class CustomCheckboxesPlugin extends Plugin {
 		this.menuHost = null;
 	}
 
-	/* ----------------------------------------------------------------- *
-	 * Setup
-	 * ----------------------------------------------------------------- */
-
+	/**
+	 * Build the services for the plugin.
+	 */
 	private async buildServices(): Promise<AppServices> {
 		const raw = await this.loadData();
 		const settings = SettingsStore.hydrate(raw, async (s) => {
@@ -60,9 +55,10 @@ export default class CustomCheckboxesPlugin extends Plugin {
 		return { app: this.app, settings, checkbox, menu };
 	}
 
-	/** Mount the singleton `<MenuRoot>` to body. Any checkbox can request
-	 *  a menu by calling `services.menu.open(...)` — this root will pick
-	 *  it up and render. */
+	/** 
+	 * Mount the singleton `<MenuRoot>` to body.
+	 * Any checkbox can request a menu by calling `services.menu.open(...)` the root will pick it up.
+	 */
 	private mountMenuRoot(): void {
 		this.menuHost = document.createElement("div");
 		this.menuHost.className = "ccb-menu-portal";
@@ -74,6 +70,9 @@ export default class CustomCheckboxesPlugin extends Plugin {
 		);
 	}
 
+	/**
+	 * Register the live and reading view integrations.
+	 */
 	private registerIntegrations(): void {
 		const { settings } = this.services;
 		const enableReadingView = settings.getState().enableReadingView;
@@ -94,50 +93,4 @@ export default class CustomCheckboxesPlugin extends Plugin {
 		}
 	}
 
-	private registerCommands(): void {
-		this.addCommand({
-			id: "open-checkbox-menu-at-cursor",
-			name: "Open custom checkbox menu at cursor",
-			editorCallback: (editor) => {
-				void this.openMenuAtCursor(editor);
-			},
-		});
-	}
-
-	/* ----------------------------------------------------------------- *
-	 * Editor command: open variant menu from cursor position
-	 * ----------------------------------------------------------------- */
-	private async openMenuAtCursor(editor: Editor): Promise<void> {
-		const cm = (editor as unknown as { cm?: EditorView }).cm;
-		if (!cm) {
-			new Notice("Live Preview editor not available.");
-			return;
-		}
-		const pos = cm.state.selection.main.head;
-		const line = cm.state.doc.lineAt(pos);
-		if (!TASK_LINE_REGEX.test(line.text)) {
-			new Notice("Cursor is not on a task line.");
-			return;
-		}
-
-		const target: IconTarget = {
-			kind: "live",
-			view: cm,
-			getLineNumber: () =>
-				cm.state.doc.lineAt(cm.state.selection.main.head).number,
-		};
-
-		const current = await this.services.checkbox.readChar(target);
-		if (current == null) return;
-
-		const coords = cm.coordsAtPos(pos);
-		this.services.menu.open({
-			clientX: coords?.left ?? 0,
-			clientY: coords?.bottom ?? 0,
-			currentChar: current,
-			onSelect: (next) => {
-				void this.services.checkbox.writeChar(target, next);
-			},
-		});
-	}
 }

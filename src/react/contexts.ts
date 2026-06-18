@@ -4,8 +4,10 @@ import type { SettingsStore } from "../state/SettingsStore";
 import type { CheckboxService } from "../state/CheckboxService";
 import type { MenuService } from "../state/MenuService";
 
-/** Bag of services that the React tree consumes. The plugin instantiates
- *  these once and threads them through `<Providers>`. */
+/**
+ * Bag of services that the React tree consumes.
+ * The plugin instantiates these once and threads them through `<Providers>`.
+ */
 export interface AppServices {
 	app: App;
 	settings: SettingsStore;
@@ -29,5 +31,4 @@ export const useApp = () => useServices().app;
 export const useSettingsStore = () => useServices().settings;
 export const useCheckboxService = () => useServices().checkbox;
 export const useMenuService = () => useServices().menu;
-
 export { ServicesContext };
