@@ -1,0 +1,29 @@
+{
+  "name": "obsidian-custom-checkboxes",
+  "version": "0.1.0",
+  "description": "Configure custom checkbox variants and render each one with a custom SVG or image icon.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "checkbox",
+    "tasks"
+  ],
+  "author": "Matt Hagger",
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/language": "6.10.2",
+    "@codemirror/state": "6.5.0",
+    "@codemirror/view": "6.26.3",
+    "@types/node": "^16.11.6",
+    "builtin-modules": "3.3.0",
+    "esbuild": "0.20.2",
+    "obsidian": "latest",
+    "tslib": "2.4.0",
+    "typescript": "4.7.4"
+  }
+}

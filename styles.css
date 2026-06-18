@@ -1,0 +1,290 @@
+/* ============================================================
+ * Custom Checkboxes — runtime styles
+ * ============================================================ */
+
+/* The wrapper that replaces the native <input type="checkbox"> */
+.ccb-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: text-top;
+  width: var(--ccb-size, 1.15em);
+  height: var(--ccb-size, 1.15em);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  color: var(--text-normal);
+  /* transition: transform 80ms ease; */
+}
+
+/* 
+.ccb-checkbox:hover {
+  transform: scale(1.08);
+}
+
+.ccb-checkbox:active {
+  transform: scale(0.92);
+} */
+
+.ccb-checkbox svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* Completed-state styling — applied to the line/li when the variant is configured as "mark as completed" */
+.ccb-completed-line {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Reset Obsidian's default checked styling on the <li class="task-list-item is-checked"> to avoid conflicts. */
+.markdown-rendered li.task-list-item.is-checked {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* In Live Preview, Obsidian's task widget renders native
+ * <input class="task-list-item-checkbox"> elements that we then swap out for
+ * .ccb-checkbox spans via a MutationObserver. The swap is asynchronous, so
+ * for one frame after CodeMirror re-renders a task line the native input is
+ * briefly visible. Hide it (preserving its hit area / size) so the user sees
+ * blank space rather than a default checkbox flashing on every toggle. */
+.cm-content input.task-list-item-checkbox {
+  visibility: hidden;
+  width: var(--ccb-size, 1.15em);
+  height: var(--ccb-size, 1.15em);
+  pointer-events: none;
+  margin: 0;
+}
+
+/* ============================================================
+ * Settings UI
+ * ============================================================ */
+
+.ccb-variant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ccb-variant-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--background-secondary);
+}
+
+.ccb-variant-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.ccb-variant-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 4px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+
+.ccb-variant-preview svg {
+  width: 1.2em;
+  height: 1.2em;
+  display: block;
+}
+
+.ccb-variant-card-header-spacer {
+  flex: 1;
+}
+
+.ccb-variant-row {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.ccb-variant-row label {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.ccb-variant-row input[type="text"],
+.ccb-variant-row select,
+.ccb-variant-row textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ccb-variant-row textarea {
+  min-height: 6rem;
+  font-family: var(--font-monospace);
+  font-size: 0.85em;
+}
+
+.ccb-variant-row-full {
+  grid-column: 1 / -1;
+}
+
+.ccb-variant-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.ccb-add-variant-button {
+  margin-top: 1rem;
+}
+
+/* ============================================================
+ * Variant chooser popup (shift-click / long-press / right-click)
+ *
+ * Custom popup rather than Obsidian's `Menu` API because we want full
+ * control over how the icon, label, and shortcut chip lay out — and to
+ * apply per-variant `color` to the SVG. All visual properties are
+ * derived from Obsidian's CSS variables so the popup honors whichever
+ * theme the user has installed.
+ * ============================================================ */
+.ccb-menu {
+  position: fixed;
+  z-index: var(--layer-menu, 1000);
+  min-width: 200px;
+  max-width: 320px;
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m, 8px);
+  box-shadow: var(--shadow-s, 0 8px 24px rgba(0, 0, 0, 0.25));
+  font-size: var(--font-ui-small, 13px);
+  font-family: var(--font-interface);
+  outline: none;
+  /* Subtle entrance: scale-in from the click point so the popup feels
+   * anchored to the checkbox rather than appearing out of nowhere. */
+  animation: ccb-menu-in 80ms ease-out;
+  transform-origin: top left;
+}
+
+@keyframes ccb-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ccb-menu-item {
+  display: grid;
+  grid-template-columns: 1.4em 1.25em 1fr auto 1em;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-s, 4px);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  line-height: 1.3;
+}
+
+/* Number badge in the leading column. Acts as a discoverable hint that
+ * pressing this digit while the menu is open will pick the row. */
+.ccb-menu-item-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  font-family: var(--font-monospace);
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--background-modifier-border);
+  border-radius: var(--radius-s, 4px);
+  line-height: 1;
+}
+
+.ccb-menu-item-number--empty {
+  background: transparent;
+}
+
+.ccb-menu-item--focused .ccb-menu-item-number {
+  color: var(--text-on-accent, var(--text-normal));
+  background: var(--interactive-accent, var(--background-modifier-border));
+}
+
+.ccb-menu-item--focused {
+  background: var(--background-modifier-hover);
+}
+
+.ccb-menu-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  color: var(--text-normal);
+}
+
+.ccb-menu-item-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ccb-menu-item-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ccb-menu-item-char {
+  font-family: var(--font-monospace);
+  font-size: 0.82em;
+  color: var(--text-muted);
+  background: var(--background-modifier-border);
+  padding: 1px 6px;
+  border-radius: 3px;
+  min-width: 1.4em;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.ccb-menu-item-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  color: var(--text-accent, var(--interactive-accent));
+  visibility: hidden;
+}
+
+.ccb-menu-item-check svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ccb-menu-item--active .ccb-menu-item-check {
+  visibility: visible;
+}
+
+.ccb-menu-item--active .ccb-menu-item-label {
+  font-weight: 600;
+}
