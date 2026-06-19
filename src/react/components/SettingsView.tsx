@@ -1,4 +1,4 @@
-import { type CSSProperties } from "react";
+import { type CSSProperties, useEffect } from "react";
 import { Notice } from "obsidian";
 import {
 	DEFAULT_SETTINGS,
@@ -6,9 +6,9 @@ import {
 	type CustomCheckboxesSettings,
 } from "../../types";
 import { makeId } from "../../utils";
+import { ensureEmptyVariant } from "../../state/SettingsStore";
 import { useSettingsStore } from "../contexts";
 import { useSettings } from "../hooks/useSettings";
-import { CharacterSelect } from "./CharacterSelect";
 import { SettingItem } from "./SettingItem";
 import { Toggle } from "./Toggle";
 import { VariantCard } from "./VariantCard";
@@ -38,6 +38,15 @@ export function SettingsView() {
 	const update = (
 		producer: (s: CustomCheckboxesSettings) => CustomCheckboxesSettings,
 	) => store.setState(producer);
+
+	// Self-heal: the empty (" ") variant must always exist. If it was somehow
+	// removed from saved data, re-add it the moment the user opens settings.
+	useEffect(() => {
+		update((s) => {
+			const next = ensureEmptyVariant(s.variants);
+			return next === s.variants ? s : { ...s, variants: next };
+		});
+	}, []);
 
 	const updateVariant = (
 		index: number,
@@ -102,22 +111,6 @@ export function SettingsView() {
 		<div className="ccb-settings">
 			<h2>Custom Checkboxes</h2>
 
-			<SettingItem
-				name="Next character for empty boxes"
-				desc="What an empty checkbox switches to when short-clicked. Each variant below can override its own 'next'."
-			>
-				<CharacterSelect
-					value={settings.defaultCheckedCharacter}
-					excludeChar=""
-					onChange={(v) =>
-						update((s) => ({
-							...s,
-							defaultCheckedCharacter: v,
-						}))
-					}
-				/>
-			</SettingItem>
-
 			<SettingItem name="Enable in Reading view">
 				<Toggle
 					checked={settings.enableReadingView}
@@ -172,6 +165,9 @@ export function SettingsView() {
 						variant={variant}
 						index={index}
 						total={settings.variants.length}
+						// The empty (" ") variant must always exist: lock its
+						// character and disable deletion.
+						locked={variant.character === ""}
 						onChange={(patch) => updateVariant(index, patch)}
 						onMove={(dir) => moveVariant(index, dir)}
 						onDelete={() => deleteVariant(index)}

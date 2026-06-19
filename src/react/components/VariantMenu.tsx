@@ -5,7 +5,6 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { DEFAULT_SVG_EMPTY } from "src/icons";
 import { useSettings } from "../hooks/useSettings";
 import { MenuItem, type MenuRow } from "./MenuItem";
 
@@ -20,13 +19,6 @@ interface VariantMenuProps {
 	onClose: () => void;
 }
 
-const EMPTY_ROW: MenuRow = {
-	char: "",
-	label: "Empty",
-	svgSource: DEFAULT_SVG_EMPTY,
-	color: "",
-};
-
 /** Floating menu listing all variants, with keyboard, hover, and drag selection. */
 export function VariantMenu({
 	clientX,
@@ -38,19 +30,20 @@ export function VariantMenu({
 }: VariantMenuProps) {
 	const { variants } = useSettings();
 
-	const rows = useMemo<MenuRow[]>(() => {
-		const list: MenuRow[] = [EMPTY_ROW];
-		for (const v of variants) {
-			if (v.character === "") continue;
-			list.push({
+	const rows = useMemo<MenuRow[]>(
+		() =>
+			variants.map((v) => ({
 				char: v.character,
-				label: v.name || `[${v.character}]`,
+				label:
+					v.name ||
+					(v.character === ""
+						? "Empty"
+						: `[${v.character}]`),
 				svgSource: v.svgSource,
 				color: v.color,
-			});
-		}
-		return list;
-	}, [variants]);
+			})),
+		[variants],
+	);
 
 	const [focusIdx, setFocusIdx] = useState(() =>
 		Math.max(0, rows.findIndex((r) => r.char === currentChar)),

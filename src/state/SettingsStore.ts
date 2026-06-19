@@ -2,6 +2,7 @@ import {
 	type CheckboxVariant,
 	type CustomCheckboxesSettings,
 	DEFAULT_SETTINGS,
+	makeDefaultEmptyVariant,
 } from "../types";
 import { makeId, normalizeChar } from "../utils";
 
@@ -38,12 +39,19 @@ export class SettingsStore {
 		persist: Persist,
 		debounceMs?: number,
 	): SettingsStore {
-		const incoming = (raw as Partial<CustomCheckboxesSettings>) ?? {};
+		// Legacy shape included a top-level `defaultCheckedCharacter`; we now
+		// store that as the empty variant's `next` instead. Read it here so we
+		// can migrate it into the empty variant below.
+		const incoming =
+			(raw as
+				| (Partial<CustomCheckboxesSettings> & {
+						defaultCheckedCharacter?: string;
+				  })
+				| undefined) ?? {};
+		const legacyDefaultChecked = incoming.defaultCheckedCharacter;
+
 		const merged: CustomCheckboxesSettings = {
 			variants: incoming.variants ?? DEFAULT_SETTINGS.variants,
-			defaultCheckedCharacter:
-				incoming.defaultCheckedCharacter ??
-				DEFAULT_SETTINGS.defaultCheckedCharacter,
 			enableReadingView:
 				incoming.enableReadingView ??
 				DEFAULT_SETTINGS.enableReadingView,
@@ -65,6 +73,10 @@ export class SettingsStore {
 				? { next: normalizeChar(v.next) }
 				: {}),
 		}));
+		merged.variants = ensureEmptyVariant(
+			merged.variants,
+			legacyDefaultChecked,
+		);
 		return new SettingsStore(merged, persist, debounceMs);
 	}
 
@@ -124,4 +136,22 @@ function buildVariantMap(
 	const map = new Map<string, CheckboxVariant>();
 	for (const v of variants) map.set(v.character, v);
 	return map;
+}
+
+/**
+ * Guarantee that the variant list contains the empty (" ") variant.
+ * If it's missing, prepend a fresh copy of the default. When migrating from
+ * the legacy `defaultCheckedCharacter` setting, that value seeds the empty
+ * variant's `next` so the click-to-check behavior is preserved.
+ */
+export function ensureEmptyVariant(
+	variants: CheckboxVariant[],
+	legacyDefaultChecked?: string,
+): CheckboxVariant[] {
+	if (variants.some((v) => v.character === "")) return variants;
+	const fresh = makeDefaultEmptyVariant();
+	if (legacyDefaultChecked !== undefined) {
+		fresh.next = normalizeChar(legacyDefaultChecked);
+	}
+	return [fresh, ...variants];
 }

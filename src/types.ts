@@ -1,6 +1,6 @@
 import type { MarkdownPostProcessorContext } from "obsidian";
 import type { EditorView } from "@codemirror/view";
-import { DEFAULT_SVG_PARTIAL, DEFAULT_SVG_CHECK, DEFAULT_SVG_BANG, DEFAULT_SVG_QUESTION, DEFAULT_SVG_SLASH } from "./icons";
+import { DEFAULT_SVG_EMPTY, DEFAULT_SVG_PARTIAL, DEFAULT_SVG_CHECK, DEFAULT_SVG_BANG, DEFAULT_SVG_QUESTION, DEFAULT_SVG_SLASH } from "./icons";
 
 /**
  * A checkbox variant to be stored in the settings.
@@ -28,8 +28,6 @@ export interface CheckboxVariant {
 export interface CustomCheckboxesSettings {
 	/** All configured checkbox variants. */
 	variants: CheckboxVariant[];
-	/** The character of the variant that is considered checked when the user clicks on an empty checkbox. */
-	defaultCheckedCharacter: string;
 	/** Whether to enable the reading view integration. */
 	enableReadingView: boolean;
 	/** Whether to enable the live preview integration. */
@@ -41,15 +39,31 @@ export interface CustomCheckboxesSettings {
 /** The duration of a long press to open the menu. */
 export const LONG_PRESS_MS = 250;
 
+/** Stable id used for the always-present empty (" ") variant. */
+export const EMPTY_VARIANT_ID = "v-empty";
+
+/** Build a fresh copy of the default empty-checkbox variant. */
+export function makeDefaultEmptyVariant(): CheckboxVariant {
+	return {
+		id: EMPTY_VARIANT_ID,
+		character: "",
+		name: "Empty",
+		svgSource: DEFAULT_SVG_EMPTY,
+		completed: false,
+		color: "",
+		next: "x",
+	};
+}
+
 export const DEFAULT_SETTINGS: CustomCheckboxesSettings = {
 	variants: [
+		makeDefaultEmptyVariant(),
 		{ id: "v-inprogress", character: "/", name: "In Progress", svgSource: DEFAULT_SVG_PARTIAL, completed: false, color: "" },
 		{ id: "v-checked", character: "x", name: "Done", svgSource: DEFAULT_SVG_CHECK, completed: true, color: "" },
 		{ id: "v-important", character: "!", name: "Important", svgSource: DEFAULT_SVG_BANG, completed: false, color: "" },
 		{ id: "v-question", character: "?", name: "Unsure", svgSource: DEFAULT_SVG_QUESTION, completed: false, color: "" },
 		{ id: "v-cancelled", character: "-", name: "Cancelled", svgSource: DEFAULT_SVG_SLASH, completed: true, color: "" },
 	],
-	defaultCheckedCharacter: "x",
 	enableReadingView: true,
 	enableLivePreview: true,
 	enableBounceAnimation: true,

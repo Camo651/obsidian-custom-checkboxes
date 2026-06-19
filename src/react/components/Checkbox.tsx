@@ -47,12 +47,10 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 			const current = await checkboxService.readChar(target);
 			if (current == null) return;
 			const currentVariant = variantMap.get(current);
-			const next =
-				currentVariant?.next !== undefined
-					? currentVariant.next
-					: current === ""
-					? settings.defaultCheckedCharacter
-					: "";
+			// The empty (" ") variant's `next` is the global "what does empty
+			// turn into on click" value. All other variants fall back to ""
+			// (i.e. clicking an already-checked box clears it).
+			const next = currentVariant?.next ?? "";
 			setChar(next);
 			bounce();
 			await checkboxService.writeChar(target, next);
@@ -73,11 +71,10 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 			});
 		},
 		onQuickPick: (digit) => {
-			const rows: string[] = [""];
-			for (const v of settings.variants) {
-				if (v.character !== "") rows.push(v.character);
-			}
-			const next = rows[digit - 1];
+			// Quick-pick rows mirror the variant menu's row order. The empty
+			// variant is always present in the variant list, so we can map
+			// digits directly onto the variant array.
+			const next = settings.variants[digit - 1]?.character;
 			if (next === undefined) return;
 			setChar(next);
 			bounce();

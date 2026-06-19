@@ -9,6 +9,11 @@ interface VariantCardProps {
 	index: number;
 	/** Total number of variants in the list. */
 	total: number;
+	/**
+	 * When true, the variant's bracket character is fixed and the card cannot
+	 * be deleted. Used for the always-present empty (" ") variant.
+	 */
+	locked?: boolean;
 	onChange: (patch: Partial<CheckboxVariant>) => void;
 	onMove: (dir: -1 | 1) => void;
 	onDelete: () => void;
@@ -19,13 +24,15 @@ export function VariantCard({
 	variant,
 	index,
 	total,
+	locked = false,
 	onChange,
 	onMove,
 	onDelete,
 }: VariantCardProps) {
-	const title =
-		variant.name ||
-		(variant.character ? `[${variant.character}]` : "(unnamed)");
+	const title = locked
+		? variant.name || "Empty"
+		: variant.name ||
+		  (variant.character ? `[${variant.character}]` : "(unnamed)");
 
 	return (
 		<div
@@ -79,7 +86,17 @@ export function VariantCard({
 				>
 					↓
 				</button>
-				<button onClick={onDelete}>Delete</button>
+				<button
+					onClick={onDelete}
+					disabled={locked}
+					title={
+						locked
+							? "The empty checkbox can't be deleted"
+							: undefined
+					}
+				>
+					Delete
+				</button>
 			</div>
 
 			<Field label="Character">
@@ -87,7 +104,13 @@ export function VariantCard({
 					type="text"
 					maxLength={1}
 					placeholder="x"
-					value={variant.character}
+					value={locked ? "" : variant.character}
+					disabled={locked}
+					title={
+						locked
+							? "The empty checkbox character is fixed ([ ])."
+							: undefined
+					}
 					style={{
 						width: "100%",
 						boxSizing: "border-box",
