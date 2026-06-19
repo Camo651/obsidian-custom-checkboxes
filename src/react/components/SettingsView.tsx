@@ -142,6 +142,21 @@ export function SettingsView() {
 				/>
 			</SettingItem>
 
+			<SettingItem
+				name="Bounce animation"
+				desc="Play a small bounce on the icon whenever a checkbox's character changes."
+			>
+				<Toggle
+					checked={settings.enableBounceAnimation}
+					onChange={(v) =>
+						update((s) => ({
+							...s,
+							enableBounceAnimation: v,
+						}))
+					}
+				/>
+			</SettingItem>
+
 			<h3>Variants</h3>
 			<p className="setting-item-description">
 				Configure each character that can appear inside [ ]. Each

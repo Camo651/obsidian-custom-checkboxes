@@ -34,6 +34,8 @@ export interface CustomCheckboxesSettings {
 	enableReadingView: boolean;
 	/** Whether to enable the live preview integration. */
 	enableLivePreview: boolean;
+	/** Play a bounce animation on the icon whenever a checkbox's character changes. */
+	enableBounceAnimation: boolean;
 }
 
 /** The duration of a long press to open the menu. */
@@ -50,6 +52,7 @@ export const DEFAULT_SETTINGS: CustomCheckboxesSettings = {
 	defaultCheckedCharacter: "x",
 	enableReadingView: true,
 	enableLivePreview: true,
+	enableBounceAnimation: true,
 };
 
 /** Matches a task list line:  - [x] something */

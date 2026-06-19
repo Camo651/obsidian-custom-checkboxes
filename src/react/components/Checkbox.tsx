@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { type IconTarget } from "../../types";
 import { useCheckboxService, useMenuService } from "../contexts";
 import { useSettings, useVariantMap } from "../hooks/useSettings";
 import { useCheckboxInteractions } from "../hooks/useCheckboxInteractions";
+import { useWithAnimation } from "../hooks/useWithAnimation";
 import { CheckboxIcon } from "./CheckboxIcon";
 
 interface CheckboxProps {
@@ -24,6 +25,23 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 
 	const variant = variantMap.get(char);
 
+	const persistKey = useMemo(() => {
+		if (target.kind !== "live") return undefined;
+		const n = target.getLineNumber();
+		return n != null ? `live:${n}` : undefined;
+	}, [target]);
+
+	const { play: playBounce, WithAnimation } = useWithAnimation(
+		"ccb-bounce",
+		persistKey,
+	);
+
+	const bounce = () => {
+		if (settings.enableBounceAnimation){
+			playBounce()
+		};
+	};
+
 	useCheckboxInteractions(ref, {
 		onShortClick: async () => {
 			const current = await checkboxService.readChar(target);
@@ -36,6 +54,7 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 					? settings.defaultCheckedCharacter
 					: "";
 			setChar(next);
+			bounce();
 			await checkboxService.writeChar(target, next);
 		},
 		onOpenMenu: async (ev, dragMode) => {
@@ -48,6 +67,7 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 				dragMode,
 				onSelect: (next) => {
 					setChar(next);
+					bounce();
 					void checkboxService.writeChar(target, next);
 				},
 			});
@@ -60,9 +80,14 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 			const next = rows[digit - 1];
 			if (next === undefined) return;
 			setChar(next);
+			bounce();
 			void checkboxService.writeChar(target, next);
 		},
 	});
 
-	return <CheckboxIcon ref={ref} char={char} variant={variant} />;
+	return (
+		<WithAnimation>
+			<CheckboxIcon ref={ref} char={char} variant={variant} />
+		</WithAnimation>
+	);
 }

@@ -50,6 +50,9 @@ export class SettingsStore {
 			enableLivePreview:
 				incoming.enableLivePreview ??
 				DEFAULT_SETTINGS.enableLivePreview,
+			enableBounceAnimation:
+				incoming.enableBounceAnimation ??
+				DEFAULT_SETTINGS.enableBounceAnimation,
 		};
 		merged.variants = merged.variants.map((v) => ({
 			id: v.id ?? makeId(),
