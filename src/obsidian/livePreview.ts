@@ -25,10 +25,10 @@ export function buildLivePreviewExtension(services: AppServices) {
 						for (const node of Array.from(m.addedNodes)) {
 							if (!(node instanceof HTMLElement)) continue;
 							if (
-								node.matches?.(
+								node.matches(
 									"input.task-list-item-checkbox",
 								) ||
-								node.querySelector?.(
+								node.querySelector(
 									"input.task-list-item-checkbox",
 								)
 							) {
@@ -101,8 +101,9 @@ export function buildLivePreviewExtension(services: AppServices) {
 /** Editor extension that swallows mouse / pointer events on `.ccb-checkbox` so Obsidian's task-toggle never sees them. */
 export function buildEditorEventHandlers() {
 	const claim = (event: Event): boolean => {
-		const t = event.target as HTMLElement | null;
-		if (!t?.closest?.(".ccb-checkbox")) return false;
+		const target = event.target;
+		if (!(target instanceof Element)) return false;
+		if (!target.closest(".ccb-checkbox")) return false;
 		event.preventDefault();
 		return true;
 	};

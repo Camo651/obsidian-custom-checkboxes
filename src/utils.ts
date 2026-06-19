@@ -1,3 +1,4 @@
+import type { CheckboxVariant } from "./types";
 
 /**
  * Generate a simple random id.
@@ -47,4 +48,54 @@ export function sanitizeSvg(svgSource: string): string | null {
 		console.error("Failed to sanitize SVG source:", svgSource);
 		return null;
 	}
+}
+
+/* ----------------------------------------------------------------------------
+ * Runtime type guards / parsers
+ *
+ * Used at the trust boundary (data loaded from disk via Obsidian's
+ * `loadData()`) to validate shape without resorting to `as` casts. Each helper
+ * narrows `unknown` to a known type or falls back to a safe default.
+ * -------------------------------------------------------------------------- */
+
+/** Runtime type guard: narrows `unknown` to a string-keyed record. */
+export function isPlainObject(
+	value: unknown,
+): value is Record<string, unknown> {
+	return (
+		typeof value === "object" && value !== null && !Array.isArray(value)
+	);
+}
+
+/** Read a boolean field from an `unknown` source, falling back when missing/invalid. */
+export function readBoolean(value: unknown, fallback: boolean): boolean {
+	return typeof value === "boolean" ? value : fallback;
+}
+
+/** Read a string field from an `unknown` source, falling back to `""` when missing/invalid. */
+export function readString(value: unknown, fallback = ""): string {
+	return typeof value === "string" ? value : fallback;
+}
+
+/**
+ * Parse one entry of `settings.variants` from disk into a validated
+ * {@link CheckboxVariant}. Anything missing or of the wrong type is replaced
+ * with a safe default; this is the only place we have to defend against
+ * malformed input, so consumers can rely on the shape downstream.
+ */
+export function parseVariant(raw: unknown): CheckboxVariant {
+	const o = isPlainObject(raw) ? raw : {};
+	const idRaw = typeof o.id === "string" ? o.id : "";
+	const variant: CheckboxVariant = {
+		id: idRaw || makeId(),
+		character: normalizeChar(readString(o.character)),
+		name: readString(o.name),
+		svgSource: readString(o.svgSource),
+		completed: readBoolean(o.completed, false),
+		color: readString(o.color),
+	};
+	if (typeof o.next === "string") {
+		variant.next = normalizeChar(o.next);
+	}
+	return variant;
 }

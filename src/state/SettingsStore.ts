@@ -4,7 +4,12 @@ import {
 	DEFAULT_SETTINGS,
 	makeDefaultEmptyVariant,
 } from "../types";
-import { makeId, normalizeChar } from "../utils";
+import {
+	isPlainObject,
+	normalizeChar,
+	parseVariant,
+	readBoolean,
+} from "../utils";
 
 type Listener = () => void;
 type Persist = (settings: CustomCheckboxesSettings) => Promise<void>;
@@ -33,50 +38,49 @@ export class SettingsStore {
 		this.variantMapCache = buildVariantMap(initial.variants);
 	}
 
-	/** Hydrate from raw saved data, merging with defaults and normalizing variants. */
+	/**
+	 * Hydrate from raw saved data, merging with defaults and normalizing variants.
+	 *
+	 * `raw` is typed as `unknown` because it comes from Obsidian's `loadData()`,
+	 * which we can't trust to match our schema (user may have hand-edited the
+	 * file, or it may be a stale shape from an older plugin version). We narrow
+	 * it here via runtime type guards rather than `as` casts so that
+	 * malformed values are silently replaced with defaults instead of crashing
+	 * later when consumers expect a specific type.
+	 */
 	static hydrate(
 		raw: unknown,
 		persist: Persist,
 		debounceMs?: number,
 	): SettingsStore {
+		const obj = isPlainObject(raw) ? raw : {};
+
 		// Legacy shape included a top-level `defaultCheckedCharacter`; we now
-		// store that as the empty variant's `next` instead. Read it here so we
-		// can migrate it into the empty variant below.
-		const incoming =
-			(raw as
-				| (Partial<CustomCheckboxesSettings> & {
-						defaultCheckedCharacter?: string;
-				  })
-				| undefined) ?? {};
-		const legacyDefaultChecked = incoming.defaultCheckedCharacter;
+		// store that as the empty variant's `next` instead.
+		const legacyDefaultChecked =
+			typeof obj.defaultCheckedCharacter === "string"
+				? obj.defaultCheckedCharacter
+				: undefined;
+
+		const rawVariants = Array.isArray(obj.variants)
+			? obj.variants.map(parseVariant)
+			: DEFAULT_SETTINGS.variants.map((v) => ({ ...v }));
 
 		const merged: CustomCheckboxesSettings = {
-			variants: incoming.variants ?? DEFAULT_SETTINGS.variants,
-			enableReadingView:
-				incoming.enableReadingView ??
+			variants: ensureEmptyVariant(rawVariants, legacyDefaultChecked),
+			enableReadingView: readBoolean(
+				obj.enableReadingView,
 				DEFAULT_SETTINGS.enableReadingView,
-			enableLivePreview:
-				incoming.enableLivePreview ??
+			),
+			enableLivePreview: readBoolean(
+				obj.enableLivePreview,
 				DEFAULT_SETTINGS.enableLivePreview,
-			enableBounceAnimation:
-				incoming.enableBounceAnimation ??
+			),
+			enableBounceAnimation: readBoolean(
+				obj.enableBounceAnimation,
 				DEFAULT_SETTINGS.enableBounceAnimation,
+			),
 		};
-		merged.variants = merged.variants.map((v) => ({
-			id: v.id ?? makeId(),
-			character: normalizeChar(v.character),
-			name: v.name ?? "",
-			svgSource: v.svgSource ?? "",
-			completed: !!v.completed,
-			color: v.color ?? "",
-			...(v.next !== undefined
-				? { next: normalizeChar(v.next) }
-				: {}),
-		}));
-		merged.variants = ensureEmptyVariant(
-			merged.variants,
-			legacyDefaultChecked,
-		);
 		return new SettingsStore(merged, persist, debounceMs);
 	}
 

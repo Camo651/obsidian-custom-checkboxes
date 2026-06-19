@@ -51,7 +51,7 @@ export function useCheckboxInteractions(
 			removeQuickPick();
 		};
 
-		const swallow = (ev: Event) => {
+		const swallow: EventListener = (ev) => {
 			ev.preventDefault();
 			ev.stopPropagation();
 			ev.stopImmediatePropagation();
@@ -122,7 +122,7 @@ export function useCheckboxInteractions(
 			"touchend",
 		];
 		for (const t of blocking) {
-			el.addEventListener(t, swallow as EventListener);
+			el.addEventListener(t, swallow);
 		}
 		el.addEventListener("pointerdown", onPointerDown);
 		el.addEventListener("pointerup", onPointerUp);
@@ -134,7 +134,7 @@ export function useCheckboxInteractions(
 		return () => {
 			clear();
 			for (const t of blocking) {
-				el.removeEventListener(t, swallow as EventListener);
+				el.removeEventListener(t, swallow);
 			}
 			el.removeEventListener("pointerdown", onPointerDown);
 			el.removeEventListener("pointerup", onPointerUp);

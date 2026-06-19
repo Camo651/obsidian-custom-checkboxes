@@ -91,7 +91,11 @@ export function VariantMenu({
 
 	useEffect(() => {
 		const onDocMouseDown = (e: MouseEvent) => {
-			if (!menuRef.current?.contains(e.target as Node)) onClose();
+			const target = e.target;
+			const inMenu =
+				target instanceof Node &&
+				menuRef.current?.contains(target) === true;
+			if (!inMenu) onClose();
 		};
 		const id = window.setTimeout(() => {
 			document.addEventListener("mousedown", onDocMouseDown, true);
@@ -123,10 +127,11 @@ export function VariantMenu({
 			x: number,
 			y: number,
 		): { idx: number; char: string } | null => {
-			const el = document.elementFromPoint(
-				x,
-				y,
-			) as HTMLElement | null;
+			// `elementFromPoint` returns `Element | null`; `.closest` is
+			// available on Element and the typed overload constrains the
+			// result to `HTMLElement` so we can read `dataset` below
+			// without any cast.
+			const el = document.elementFromPoint(x, y);
 			const itemEl = el?.closest<HTMLElement>("[data-ccb-menu-idx]");
 			if (!itemEl) return null;
 			const idx = parseInt(itemEl.dataset.ccbMenuIdx ?? "", 10);
