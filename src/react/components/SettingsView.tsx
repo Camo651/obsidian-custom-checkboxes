@@ -8,6 +8,7 @@ import {
 import { makeId } from "../../utils";
 import { useSettingsStore } from "../contexts";
 import { useSettings } from "../hooks/useSettings";
+import { CharacterSelect } from "./CharacterSelect";
 import { SettingItem } from "./SettingItem";
 import { Toggle } from "./Toggle";
 import { VariantCard } from "./VariantCard";
@@ -102,18 +103,16 @@ export function SettingsView() {
 			<h2>Custom Checkboxes</h2>
 
 			<SettingItem
-				name="Default 'checked' character"
-				desc="What an empty checkbox becomes when short-clicked. Default 'x'."
+				name="Next character for empty boxes"
+				desc="What an empty checkbox switches to when short-clicked. Each variant below can override its own 'next'."
 			>
-				<input
-					type="text"
+				<CharacterSelect
 					value={settings.defaultCheckedCharacter}
-					onChange={(e) =>
+					excludeChar=""
+					onChange={(v) =>
 						update((s) => ({
 							...s,
-							defaultCheckedCharacter: (
-								e.target.value || "x"
-							).slice(0, 1),
+							defaultCheckedCharacter: v,
 						}))
 					}
 				/>

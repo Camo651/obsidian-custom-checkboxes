@@ -1,4 +1,5 @@
 import { type CheckboxVariant } from "../../types";
+import { CharacterSelect } from "./CharacterSelect";
 import { CheckboxIcon } from "./CheckboxIcon";
 import { Field } from "./Field";
 
@@ -106,6 +107,15 @@ export function VariantCard({
 						boxSizing: "border-box",
 					}}
 					onChange={(e) => onChange({ name: e.target.value })}
+				/>
+			</Field>
+
+			<Field label="Next character on click">
+				<CharacterSelect
+					value={variant.next ?? ""}
+					includeEmpty
+					excludeChar={variant.character}
+					onChange={(v) => onChange({ next: v })}
 				/>
 			</Field>
 

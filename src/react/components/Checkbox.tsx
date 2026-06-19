@@ -28,8 +28,13 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 		onShortClick: async () => {
 			const current = await checkboxService.readChar(target);
 			if (current == null) return;
+			const currentVariant = variantMap.get(current);
 			const next =
-				current === "" ? settings.defaultCheckedCharacter : "";
+				currentVariant?.next !== undefined
+					? currentVariant.next
+					: current === ""
+					? settings.defaultCheckedCharacter
+					: "";
 			setChar(next);
 			await checkboxService.writeChar(target, next);
 		},

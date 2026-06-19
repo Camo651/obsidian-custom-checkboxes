@@ -18,6 +18,8 @@ export interface CheckboxVariant {
 	completed: boolean;
 	/** Optional color override applied to SVG. */
 	color: string;
+	/** Character to switch to when this variant is short-clicked. Defaults to empty. */
+	next?: string;
 }
 
 /**

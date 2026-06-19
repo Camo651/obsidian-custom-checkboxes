@@ -58,6 +58,9 @@ export class SettingsStore {
 			svgSource: v.svgSource ?? "",
 			completed: !!v.completed,
 			color: v.color ?? "",
+			...(v.next !== undefined
+				? { next: normalizeChar(v.next) }
+				: {}),
 		}));
 		return new SettingsStore(merged, persist, debounceMs);
 	}
