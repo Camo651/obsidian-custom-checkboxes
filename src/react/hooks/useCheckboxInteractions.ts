@@ -2,10 +2,9 @@ import { type RefObject, useEffect, useRef } from "react";
 import { LONG_PRESS_MS } from "../../types";
 
 interface CheckboxInteractionCallbacks {
+	/** Plain click */
 	onShortClick: (ev: MouseEvent) => void;
-	/** Open the variant menu. `dragMode` is true when the gesture began
-	 *  with a long-press and the pointer is still down — the menu uses
-	 *  this to enable drag-to-select. */
+	/** Open the variant menu. `dragMode` is true when the gesture began with a long-press. */
 	onOpenMenu: (
 		ev: MouseEvent | PointerEvent,
 		dragMode: boolean,
@@ -13,21 +12,10 @@ interface CheckboxInteractionCallbacks {
 }
 
 /**
- * Native event listeners for a checkbox icon. Encapsulates:
- *  - long-press to open menu
- *  - short click to toggle
- *  - shift-click / right-click / long-press all open the menu
- *  - aggressive event swallowing so Obsidian's CodeMirror task-toggle
- *    handler never sees these events
+ * Wire native event listeners on a checkbox icon.
  *
- * IMPORTANT: must use native `addEventListener` rather than React's
- * synthetic event props. React 17+ delegates events at the root container
- * — by the time React's handlers fire, the native event has already
- * bubbled past `cm-content` where Obsidian's handler lives. Capturing on
- * the icon element itself is the only way to suppress that.
- *
- * Callbacks are read from a ref so updates to them don't tear down
- * listeners on every render.
+ * Uses native `addEventListener` rather than React's synthetic events so we can
+ * preempt Obsidian's CodeMirror task-toggle handler before it runs.
  */
 export function useCheckboxInteractions(
 	ref: RefObject<HTMLElement | null>,
@@ -98,8 +86,6 @@ export function useCheckboxInteractions(
 			cbRef.current.onOpenMenu(ev, false);
 		};
 
-		// Block any other event Obsidian / CodeMirror might use to toggle
-		// the task on the way down.
 		const blocking: (keyof HTMLElementEventMap)[] = [
 			"mousedown",
 			"mouseup",

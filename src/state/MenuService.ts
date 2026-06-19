@@ -1,17 +1,21 @@
 type Listener = () => void;
 
+/**
+ * A request to open the variant menu.
+ */
 export interface MenuRequest {
 	clientX: number;
 	clientY: number;
+	/** Character currently in the brackets, used to highlight the active row. */
 	currentChar: string;
-	/** True when the menu is being opened mid-gesture (a long-press on the
-	 *  checkbox where the user hasn't lifted the pointer yet). The menu
-	 *  uses this to enable drag-to-select: pointermove highlights the item
-	 *  under the cursor, pointerup selects it. */
+	/** True when the menu was opened mid-gesture (long-press still down). Enables drag-to-select. */
 	dragMode?: boolean;
 	onSelect: (char: string) => void;
 }
 
+/**
+ * Current state of the menu service.
+ */
 export interface MenuState {
 	open: boolean;
 	request: MenuRequest | null;
@@ -19,13 +23,7 @@ export interface MenuState {
 
 const CLOSED: MenuState = { open: false, request: null };
 
-/**
- * Singleton store for the variant menu. A single `<MenuRoot>` mounted at
- * plugin load subscribes to this service and renders the menu when open.
- * Any number of checkboxes (each in its own React tree) can call `open()`
- * — the service replaces any prior request, so only one menu is on
- * screen at a time.
- */
+/** Singleton store for the variant menu. Only one menu request is on screen at a time. */
 export class MenuService {
 	private state: MenuState = CLOSED;
 	private listeners = new Set<Listener>();
@@ -39,11 +37,13 @@ export class MenuService {
 		};
 	};
 
+	/** Open the menu, replacing any prior request. */
 	open = (request: MenuRequest): void => {
 		this.state = { open: true, request };
 		this.notify();
 	};
 
+	/** Close the menu. No-op if already closed. */
 	close = (): void => {
 		if (!this.state.open) return;
 		this.state = CLOSED;

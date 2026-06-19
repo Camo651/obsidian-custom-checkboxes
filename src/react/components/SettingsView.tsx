@@ -2,15 +2,16 @@ import { type CSSProperties } from "react";
 import { Notice } from "obsidian";
 import {
 	DEFAULT_SETTINGS,
-	DEFAULT_SVG_CHECK,
 	type CheckboxVariant,
 	type CustomCheckboxesSettings,
 } from "../../types";
 import { makeId } from "../../utils";
 import { useSettingsStore } from "../contexts";
 import { useSettings } from "../hooks/useSettings";
-import { SettingItem, Toggle } from "./SettingItem";
+import { SettingItem } from "./SettingItem";
+import { Toggle } from "./Toggle";
 import { VariantCard } from "./VariantCard";
+import { DEFAULT_SVG_CHECK } from "src/icons";
 
 const variantListStyle: CSSProperties = {
 	display: "flex",

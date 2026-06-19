@@ -8,19 +8,8 @@ import type { AppServices } from "../react/contexts";
 import { readLiveChar, swapInputForCheckbox } from "./swapCheckbox";
 
 /**
- * Live Preview integration.
- *
- * Strategy: let Obsidian render its native `<input class="task-list-item-checkbox">`,
- * then swap each one out for a React-mounted host. We can't outrank
- * Obsidian's bracket decoration via `Decoration.replace` (verified
- * empirically — the built-in task-list ViewPlugin wins the conflict at
- * the bracket range), so we use a MutationObserver scoped to
- * `contentDOM` instead.
- *
- * The actual swap is shared with the Reading View post-processor — see
- * `swapInputForCheckbox`. This file's job is just the CodeMirror-shaped
- * lifecycle: when to find inputs, and how to build a `live` IconTarget
- * for them.
+ * Build a CodeMirror ViewPlugin that swaps Obsidian's native task `<input>`
+ * elements for our React-rendered checkboxes inside the Live Preview editor.
  */
 export function buildLivePreviewExtension(services: AppServices) {
 	return ViewPlugin.fromClass(
@@ -32,9 +21,6 @@ export function buildLivePreviewExtension(services: AppServices) {
 				this.replaceAll();
 				this.observer = new MutationObserver((mutations) => {
 					if (this.replacing) return;
-					// Cheap pre-check: only walk replacements when we
-					// see an `input.task-list-item-checkbox` get added.
-					// Without this, every cursor blink re-runs the loop.
 					for (const m of mutations) {
 						for (const node of Array.from(m.addedNodes)) {
 							if (!(node instanceof HTMLElement)) continue;
@@ -89,11 +75,6 @@ export function buildLivePreviewExtension(services: AppServices) {
 
 			private replaceOne(input: HTMLInputElement): void {
 				const view = this.view;
-				// Read the char from the doc, not from the input —
-				// Obsidian's task widget doesn't set `data-task` for
-				// non-standard markers in Live Preview, so trusting the
-				// input would produce the wrong char on re-render and
-				// silently strip completed-line styling.
 				const initialChar = readLiveChar(input, view);
 				swapInputForCheckbox(
 					input,
@@ -102,16 +83,10 @@ export function buildLivePreviewExtension(services: AppServices) {
 					(host) => ({
 						kind: "live",
 						view,
-						// Resolve the line number lazily from the host's
-						// live DOM position so it stays correct even
-						// when the user inserts / deletes lines above.
-						// Capturing the line number at swap time
-						// produces a stale-closure bug.
 						getLineNumber: () => {
 							try {
 								const pos = view.posAtDOM(host);
-								return view.state.doc.lineAt(pos)
-									.number;
+								return view.state.doc.lineAt(pos).number;
 							} catch {
 								return null;
 							}
@@ -123,9 +98,7 @@ export function buildLivePreviewExtension(services: AppServices) {
 	);
 }
 
-/** Editor-level DOM event handlers that claim every interesting mouse /
- *  pointer event on a `.ccb-checkbox` element before any other extension
- *  (notably Obsidian's built-in task-toggle) can react to it. */
+/** Editor extension that swallows mouse / pointer events on `.ccb-checkbox` so Obsidian's task-toggle never sees them. */
 export function buildEditorEventHandlers() {
 	const claim = (event: Event): boolean => {
 		const t = event.target as HTMLElement | null;

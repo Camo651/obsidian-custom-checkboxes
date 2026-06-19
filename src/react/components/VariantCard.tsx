@@ -1,71 +1,19 @@
-import { type CSSProperties } from "react";
 import { type CheckboxVariant } from "../../types";
 import { CheckboxIcon } from "./CheckboxIcon";
+import { Field } from "./Field";
 
 interface VariantCardProps {
 	variant: CheckboxVariant;
+	/** Position in the parent variant list. */
 	index: number;
+	/** Total number of variants in the list. */
 	total: number;
 	onChange: (patch: Partial<CheckboxVariant>) => void;
 	onMove: (dir: -1 | 1) => void;
 	onDelete: () => void;
 }
 
-const cardStyle: CSSProperties = {
-	border: "1px solid var(--background-modifier-border)",
-	borderRadius: 8,
-	padding: "1rem",
-	background: "var(--background-secondary)",
-};
-
-const headerStyle: CSSProperties = {
-	display: "flex",
-	alignItems: "center",
-	gap: "0.75rem",
-	marginBottom: "0.75rem",
-};
-
-const previewStyle: CSSProperties = {
-	display: "inline-flex",
-	alignItems: "center",
-	justifyContent: "center",
-	width: "1.6em",
-	height: "1.6em",
-	borderRadius: 4,
-	background: "var(--background-primary)",
-	border: "1px solid var(--background-modifier-border)",
-	flexShrink: 0,
-};
-
-const headerSpacer: CSSProperties = { flex: 1 };
-
-const rowStyle: CSSProperties = {
-	display: "grid",
-	gridTemplateColumns: "140px 1fr auto",
-	alignItems: "center",
-	gap: "0.75rem",
-	margin: "0.5rem 0",
-};
-
-const labelStyle: CSSProperties = {
-	color: "var(--text-muted)",
-	fontSize: "0.9em",
-};
-
-const inputStyle: CSSProperties = {
-	width: "100%",
-	boxSizing: "border-box",
-};
-
-const textareaStyle: CSSProperties = {
-	...inputStyle,
-	minHeight: "6rem",
-	fontFamily: "var(--font-monospace)",
-	fontSize: "0.85em",
-};
-
-const fullRowStyle: CSSProperties = { ...rowStyle, gridColumn: "1 / -1" };
-
+/** Settings card for a single checkbox variant. */
 export function VariantCard({
 	variant,
 	index,
@@ -79,9 +27,35 @@ export function VariantCard({
 		(variant.character ? `[${variant.character}]` : "(unnamed)");
 
 	return (
-		<div style={cardStyle}>
-			<div style={headerStyle}>
-				<div style={previewStyle}>
+		<div
+			style={{
+				border: "1px solid var(--background-modifier-border)",
+				borderRadius: 8,
+				padding: "1rem",
+				background: "var(--background-secondary)",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					gap: "0.75rem",
+					marginBottom: "0.75rem",
+				}}
+			>
+				<div
+					style={{
+						display: "inline-flex",
+						alignItems: "center",
+						justifyContent: "center",
+						width: "1.6em",
+						height: "1.6em",
+						borderRadius: 4,
+						background: "var(--background-primary)",
+						border: "1px solid var(--background-modifier-border)",
+						flexShrink: 0,
+					}}
+				>
 					<CheckboxIcon
 						char={variant.character}
 						variant={variant}
@@ -89,7 +63,7 @@ export function VariantCard({
 					/>
 				</div>
 				<strong>{title}</strong>
-				<div style={headerSpacer} />
+				<div style={{ flex: 1 }} />
 				<button
 					disabled={index === 0}
 					onClick={() => onMove(-1)}
@@ -113,7 +87,10 @@ export function VariantCard({
 					maxLength={1}
 					placeholder="x"
 					value={variant.character}
-					style={inputStyle}
+					style={{
+						width: "100%",
+						boxSizing: "border-box",
+					}}
 					onChange={(e) =>
 						onChange({ character: e.target.value.slice(0, 1) })
 					}
@@ -124,7 +101,10 @@ export function VariantCard({
 				<input
 					type="text"
 					value={variant.name}
-					style={inputStyle}
+					style={{
+						width: "100%",
+						boxSizing: "border-box",
+					}}
 					onChange={(e) => onChange({ name: e.target.value })}
 				/>
 			</Field>
@@ -133,7 +113,13 @@ export function VariantCard({
 				<textarea
 					placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">…</svg>'
 					value={variant.svgSource}
-					style={textareaStyle}
+					style={{
+						width: "100%",
+						boxSizing: "border-box",
+						minHeight: "6rem",
+						fontFamily: "var(--font-monospace)",
+						fontSize: "0.85em",
+					}}
 					onChange={(e) =>
 						onChange({ svgSource: e.target.value })
 					}
@@ -145,7 +131,10 @@ export function VariantCard({
 					type="text"
 					placeholder="e.g. #ef4444 or var(--text-accent)"
 					value={variant.color}
-					style={inputStyle}
+					style={{
+						width: "100%",
+						boxSizing: "border-box",
+					}}
 					onChange={(e) => onChange({ color: e.target.value })}
 				/>
 			</Field>
@@ -159,24 +148,6 @@ export function VariantCard({
 					}
 				/>
 			</Field>
-		</div>
-	);
-}
-
-function Field({
-	label,
-	full = false,
-	children,
-}: {
-	label: string;
-	full?: boolean;
-	children: React.ReactNode;
-}) {
-	return (
-		<div style={full ? fullRowStyle : rowStyle}>
-			<label style={labelStyle}>{label}</label>
-			{children}
-			{!full && <div />}
 		</div>
 	);
 }

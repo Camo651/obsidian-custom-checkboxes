@@ -15,10 +15,7 @@ import {
 import { processReadingView } from "./src/obsidian/readingView";
 import { CustomCheckboxSettingTab } from "./src/obsidian/settingsTab";
 
-/**
- * Plugin entry point. Owns the lifecycle and wires together services + Obsidian integrations.
- * All UI state and rendering live inside the React tree
- */
+/** Plugin entry point. Owns the lifecycle and wires services to the React tree. */
 export default class CustomCheckboxesPlugin extends Plugin {
 	private services!: AppServices;
 	private menuRoot: MountedRoot | null = null;
@@ -42,9 +39,7 @@ export default class CustomCheckboxesPlugin extends Plugin {
 		this.menuHost = null;
 	}
 
-	/**
-	 * Build the services for the plugin.
-	 */
+	/** Build the singleton service bag consumed by every React tree. */
 	private async buildServices(): Promise<AppServices> {
 		const raw = await this.loadData();
 		const settings = SettingsStore.hydrate(raw, async (s) => {
@@ -55,13 +50,9 @@ export default class CustomCheckboxesPlugin extends Plugin {
 		return { app: this.app, settings, checkbox, menu };
 	}
 
-	/** 
-	 * Mount the singleton `<MenuRoot>` to body.
-	 * Any checkbox can request a menu by calling `services.menu.open(...)` the root will pick it up.
-	 */
+	/** Mount the singleton MenuRoot into body so any checkbox can open a menu. */
 	private mountMenuRoot(): void {
 		this.menuHost = document.createElement("div");
-		this.menuHost.className = "ccb-menu-portal";
 		document.body.appendChild(this.menuHost);
 		this.menuRoot = mountReact(
 			this.menuHost,
@@ -70,13 +61,10 @@ export default class CustomCheckboxesPlugin extends Plugin {
 		);
 	}
 
-	/**
-	 * Register the live and reading view integrations.
-	 */
+	/** Register reading-view and live-preview integrations based on settings. */
 	private registerIntegrations(): void {
 		const { settings } = this.services;
-		const enableReadingView = settings.getState().enableReadingView;
-		const enableLivePreview = settings.getState().enableLivePreview;
+		const { enableReadingView, enableLivePreview } = settings.getState();
 
 		if (enableReadingView) {
 			this.registerMarkdownPostProcessor((el, ctx) =>
@@ -92,5 +80,4 @@ export default class CustomCheckboxesPlugin extends Plugin {
 			);
 		}
 	}
-
 }

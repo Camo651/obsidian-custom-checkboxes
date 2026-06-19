@@ -12,13 +12,9 @@ type Updater = (
 ) => CustomCheckboxesSettings;
 
 /**
- * Observable settings store. Every part of the React tree subscribes via
- * `useSyncExternalStore`, so a single `setState` call propagates the new
- * settings to every mounted checkbox / settings panel without any
- * imperative re-render plumbing.
- *
- * Persistence is debounced — rapid edits in the settings UI coalesce into
- * a single `saveData` call, but any pending save can be flushed on demand.
+ * Observable settings store with debounced persistence. The React tree subscribes
+ * via `useSyncExternalStore` so a single `setState` call propagates to every
+ * mounted checkbox and the settings panel.
  */
 export class SettingsStore {
 	private state: CustomCheckboxesSettings;
@@ -36,16 +32,12 @@ export class SettingsStore {
 		this.variantMapCache = buildVariantMap(initial.variants);
 	}
 
-	/** Hydrate from saved data, applying migrations. */
+	/** Hydrate from raw saved data, merging with defaults and normalizing variants. */
 	static hydrate(
 		raw: unknown,
 		persist: Persist,
 		debounceMs?: number,
 	): SettingsStore {
-		// Object.assign with DEFAULT_SETTINGS first means any keys we no
-		// longer support (e.g. legacy `iconSize`) survive the merge if
-		// present in saved data. Reconstructing only the keys the current
-		// schema knows about drops them silently.
 		const incoming = (raw as Partial<CustomCheckboxesSettings>) ?? {};
 		const merged: CustomCheckboxesSettings = {
 			variants: incoming.variants ?? DEFAULT_SETTINGS.variants,
@@ -59,10 +51,6 @@ export class SettingsStore {
 				incoming.enableLivePreview ??
 				DEFAULT_SETTINGS.enableLivePreview,
 		};
-		// Migrate variants: ensure every variant has a stable id, normalize
-		// characters, drop any legacy fields (older versions of the plugin
-		// supported `mediaKind: "image"` with an `imagePath` — those fields
-		// are silently dropped here).
 		merged.variants = merged.variants.map((v) => ({
 			id: v.id ?? makeId(),
 			character: normalizeChar(v.character),
@@ -73,8 +61,6 @@ export class SettingsStore {
 		}));
 		return new SettingsStore(merged, persist, debounceMs);
 	}
-
-	/* ----------------------- read ----------------------- */
 
 	getState = (): CustomCheckboxesSettings => this.state;
 
@@ -87,8 +73,7 @@ export class SettingsStore {
 		};
 	};
 
-	/* ----------------------- write ----------------------- */
-
+	/** Apply a functional update and schedule a debounced persist. */
 	setState = (updater: Updater): void => {
 		const next = updater(this.state);
 		if (next === this.state) return;
@@ -98,7 +83,7 @@ export class SettingsStore {
 		this.notify();
 	};
 
-	/** Cancel any pending debounced save and flush immediately. */
+	/** Cancel any pending debounced save and persist immediately. */
 	flush = async (): Promise<void> => {
 		if (this.saveTimer !== null) {
 			window.clearTimeout(this.saveTimer);
@@ -108,8 +93,6 @@ export class SettingsStore {
 		this.savePending = false;
 		await this.persist(this.state);
 	};
-
-	/* ----------------------- internals ----------------------- */
 
 	private scheduleSave(): void {
 		this.savePending = true;
@@ -128,6 +111,7 @@ export class SettingsStore {
 	}
 }
 
+/** Build a `character → variant` lookup map. */
 function buildVariantMap(
 	variants: CheckboxVariant[],
 ): Map<string, CheckboxVariant> {

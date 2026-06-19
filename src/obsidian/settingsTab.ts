@@ -4,8 +4,7 @@ import { SettingsView } from "../react/components/SettingsView";
 import { mountReact, type MountedRoot } from "../react/mountReact";
 import type { AppServices } from "../react/contexts";
 
-/** Thin Obsidian shim that mounts the React-based settings view on
- *  display, and unmounts it on hide. */
+/** Obsidian settings tab that mounts and unmounts the React {@link SettingsView}. */
 export class CustomCheckboxSettingTab extends PluginSettingTab {
 	private root: MountedRoot | null = null;
 
@@ -30,8 +29,6 @@ export class CustomCheckboxSettingTab extends PluginSettingTab {
 		this.root?.unmount();
 		this.root = null;
 		this.containerEl.empty();
-		// Make sure any pending debounced edits land before the user
-		// navigates away from the tab.
 		void this.services.settings.flush();
 	}
 }

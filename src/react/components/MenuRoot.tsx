@@ -2,9 +2,7 @@ import { useSyncExternalStore } from "react";
 import { useMenuService } from "../contexts";
 import { VariantMenu } from "./VariantMenu";
 
-/** Single React tree mounted to `document.body` at plugin load.
- *  Subscribes to the MenuService and renders the variant menu whenever
- *  any checkbox (or the editor command) requests it. */
+/** Singleton React tree that renders the variant menu whenever any checkbox requests it. */
 export function MenuRoot() {
 	const menu = useMenuService();
 	const state = useSyncExternalStore(menu.subscribe, menu.getState);

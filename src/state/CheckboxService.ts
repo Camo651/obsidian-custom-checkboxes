@@ -3,14 +3,11 @@ import type { MarkdownPostProcessorContext } from "obsidian";
 import { type IconTarget, TASK_LINE_REGEX } from "../types";
 import { normalizeChar } from "../utils";
 
-/**
- * Reads and writes the bracketed character of a task line at a given
- * `IconTarget`. Knows nothing about React — it's a pure data service that
- * the React tree consumes via context.
- */
+/** Reads and writes the bracketed character of a task line at a given {@link IconTarget}. */
 export class CheckboxService {
 	constructor(private app: App) {}
 
+	/** Read the current bracketed character from the target, or `null` if it can't be resolved. */
 	async readChar(target: IconTarget): Promise<string | null> {
 		if (target.kind === "live") {
 			const num = target.getLineNumber();
@@ -27,8 +24,8 @@ export class CheckboxService {
 		return normalizeChar(m[2]);
 	}
 
+	/** Write `nextChar` into the brackets at the target. Empty string means unchecked. */
 	async writeChar(target: IconTarget, nextChar: string): Promise<void> {
-		// Obsidian writes " " (a single space) for unchecked tasks.
 		const charForFile = nextChar === "" ? " " : nextChar;
 
 		if (target.kind === "live") {
@@ -64,12 +61,7 @@ export class CheckboxService {
 		await this.app.vault.modify(file, lines.join("\n"));
 	}
 
-	/* ----------------------------------------------------------------- *
-	 * Reading-view target resolution: figure out which source line the
-	 * clicked icon corresponds to. The host element wrapping each icon
-	 * uses `display: contents` so the actual `.ccb-checkbox` is its
-	 * descendant — resolve to that before doing the index match.
-	 * ----------------------------------------------------------------- */
+	/** Resolve a reading-view target to its source file and line index. */
 	private async resolveReadingTarget(
 		target: IconTarget,
 	): Promise<{ file: TFile; lines: string[]; lineIndex: number } | null> {

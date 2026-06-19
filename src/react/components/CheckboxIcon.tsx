@@ -1,9 +1,9 @@
 import { type CSSProperties, forwardRef } from "react";
 import {
-	DEFAULT_SVG_EMPTY,
 	type CheckboxVariant,
 } from "../../types";
 import { SafeSvg } from "./SafeSvg";
+import { DEFAULT_SVG_EMPTY } from "src/icons";
 
 interface CheckboxIconProps {
 	char: string;

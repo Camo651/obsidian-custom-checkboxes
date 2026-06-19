@@ -1,34 +1,23 @@
 import {
-	type CSSProperties,
-	forwardRef,
 	useEffect,
 	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
 } from "react";
-import { DEFAULT_SVG_CHECK, DEFAULT_SVG_EMPTY } from "../../types";
+import { DEFAULT_SVG_EMPTY } from "src/icons";
 import { useSettings } from "../hooks/useSettings";
-import { SafeSvg } from "./SafeSvg";
+import { MenuItem, type MenuRow } from "./MenuItem";
 
 interface VariantMenuProps {
 	clientX: number;
 	clientY: number;
+	/** Character currently in the brackets, used to highlight the active row. */
 	currentChar: string;
-	/** True when the menu was opened mid-gesture (long-press on a
-	 *  checkbox where the pointer is still down). Enables drag-to-select:
-	 *  pointermove highlights the row under the cursor, pointerup picks
-	 *  it. */
+	/** True when the menu was opened mid long-press; enables drag-to-select. */
 	dragMode?: boolean;
 	onSelect: (char: string) => void;
 	onClose: () => void;
-}
-
-interface MenuRow {
-	char: string;
-	label: string;
-	svgSource: string;
-	color: string;
 }
 
 const EMPTY_ROW: MenuRow = {
@@ -38,124 +27,7 @@ const EMPTY_ROW: MenuRow = {
 	color: "",
 };
 
-/* -------------------------- styles -------------------------- */
-
-const menuStyle: CSSProperties = {
-	position: "fixed",
-	zIndex: 1000,
-	minWidth: 200,
-	maxWidth: 320,
-	maxHeight: "min(60vh, 480px)",
-	overflowY: "auto",
-	padding: 4,
-	background: "var(--background-primary)",
-	color: "var(--text-normal)",
-	border: "1px solid var(--background-modifier-border)",
-	borderRadius: "var(--radius-m, 8px)",
-	boxShadow: "var(--shadow-s, 0 8px 24px rgba(0, 0, 0, 0.25))",
-	fontSize: "var(--font-ui-small, 13px)",
-	fontFamily: "var(--font-interface)",
-	outline: "none",
-	// Keyframes themselves live in styles.css — only the `animation`
-	// shorthand is inline.
-	animation: "ccb-menu-in 80ms ease-out",
-	transformOrigin: "top left",
-};
-
-const trapStyle: CSSProperties = {
-	position: "absolute",
-	opacity: 0,
-	pointerEvents: "none",
-};
-
-const itemStyle: CSSProperties = {
-	display: "grid",
-	gridTemplateColumns: "1.4em 1.25em 1fr auto 1em",
-	alignItems: "center",
-	gap: 10,
-	padding: "6px 10px",
-	borderRadius: "var(--radius-s, 4px)",
-	cursor: "pointer",
-	userSelect: "none",
-	WebkitUserSelect: "none",
-	lineHeight: 1.3,
-};
-
-const itemFocusedStyle: CSSProperties = {
-	background: "var(--background-modifier-hover)",
-};
-
-const numberBadgeBase: CSSProperties = {
-	display: "inline-flex",
-	alignItems: "center",
-	justifyContent: "center",
-	width: "1.4em",
-	height: "1.4em",
-	fontFamily: "var(--font-monospace)",
-	fontSize: "0.78em",
-	fontWeight: 600,
-	color: "var(--text-muted)",
-	background: "var(--background-modifier-border)",
-	borderRadius: "var(--radius-s, 4px)",
-	lineHeight: 1,
-};
-
-const numberBadgeEmpty: CSSProperties = {
-	background: "transparent",
-};
-
-const numberBadgeFocused: CSSProperties = {
-	color: "var(--text-on-accent, var(--text-normal))",
-	background: "var(--interactive-accent, var(--background-modifier-border))",
-};
-
-const itemIconStyle: CSSProperties = {
-	display: "inline-flex",
-	alignItems: "center",
-	justifyContent: "center",
-	width: "1.25em",
-	height: "1.25em",
-	color: "var(--text-normal)",
-};
-
-const itemLabelStyle: CSSProperties = {
-	whiteSpace: "nowrap",
-	overflow: "hidden",
-	textOverflow: "ellipsis",
-};
-
-const itemCharStyle: CSSProperties = {
-	fontFamily: "var(--font-monospace)",
-	fontSize: "0.82em",
-	color: "var(--text-muted)",
-	background: "var(--background-modifier-border)",
-	padding: "1px 6px",
-	borderRadius: 3,
-	minWidth: "1.4em",
-	textAlign: "center",
-	lineHeight: 1.4,
-};
-
-const itemCheckBase: CSSProperties = {
-	display: "inline-flex",
-	alignItems: "center",
-	justifyContent: "center",
-	width: "1em",
-	height: "1em",
-	color: "var(--text-accent, var(--interactive-accent))",
-	visibility: "hidden",
-};
-
-const itemCheckActive: CSSProperties = {
-	visibility: "visible",
-};
-
-const itemLabelActive: CSSProperties = {
-	fontWeight: 600,
-};
-
-/* -------------------------- component -------------------------- */
-
+/** Floating menu listing all variants, with keyboard, hover, and drag selection. */
 export function VariantMenu({
 	clientX,
 	clientY,
@@ -198,8 +70,6 @@ export function VariantMenu({
 		onClose();
 	};
 
-	// Position after layout so we can measure dimensions and flip if
-	// there's no room below / to the right of the cursor.
 	useLayoutEffect(() => {
 		const el = menuRef.current;
 		if (!el) return;
@@ -226,9 +96,6 @@ export function VariantMenu({
 		itemRefs.current[focusIdx]?.scrollIntoView({ block: "nearest" });
 	}, [focusIdx]);
 
-	// Outside-click + window-level dismissal. The mousedown listener is
-	// installed on a microtask delay so the gesture that opened the menu
-	// doesn't immediately close it.
 	useEffect(() => {
 		const onDocMouseDown = (e: MouseEvent) => {
 			if (!menuRef.current?.contains(e.target as Node)) onClose();
@@ -249,8 +116,6 @@ export function VariantMenu({
 		};
 	}, [onClose]);
 
-	// Latest-state refs so the document-level listeners can read the
-	// current rows / focus index without re-attaching every render.
 	const rowsRef = useRef(rows);
 	rowsRef.current = rows;
 	const focusIdxRef = useRef(focusIdx);
@@ -258,20 +123,6 @@ export function VariantMenu({
 	const selectRef = useRef(select);
 	selectRef.current = select;
 
-	/* ----------------------------------------------------------------- *
-	 * Drag-to-select.
-	 *
-	 * When the menu is opened by a long-press, the user's pointer is
-	 * still down. We track pointermove globally to highlight the row
-	 * under the cursor and pointerup to commit the selection — this
-	 * matches the macOS / touch UX of "press, drag, release".
-	 *
-	 * Both listeners run at document level with capture so we beat any
-	 * other handler (CodeMirror, Obsidian) to the gesture's end. The
-	 * pointerdown that opened the menu is consumed by the checkbox
-	 * itself; we don't pointer-capture, so subsequent pointer events
-	 * naturally fire on whatever element the cursor is currently over.
-	 * ----------------------------------------------------------------- */
 	useEffect(() => {
 		if (!dragMode) return;
 
@@ -321,18 +172,6 @@ export function VariantMenu({
 		};
 	}, [dragMode, onClose]);
 
-	/* ----------------------------------------------------------------- *
-	 * Keyboard handling.
-	 *
-	 * Attached at document level with capture so we receive key events
-	 * regardless of where focus actually lives. This matters because the
-	 * menu often opens while focus is still inside CodeMirror's
-	 * contenteditable — a React `onKeyDown` on the menu div would never
-	 * fire (the event originates outside our React root and CodeMirror
-	 * consumes it on the way down). Capture phase + stopImmediate
-	 * Propagation also makes sure neither CodeMirror nor Obsidian's
-	 * hotkey scope sees the digit keys we want to claim.
-	 * ----------------------------------------------------------------- */
 	useEffect(() => {
 		const handler = (e: KeyboardEvent) => {
 			const rows = rowsRef.current;
@@ -376,9 +215,6 @@ export function VariantMenu({
 					return;
 				}
 			}
-			// Digit 1–9 picks the row at that 1-based position. Skip
-			// when modifiers are held so the host app's shortcuts
-			// (e.g. Cmd-1 to switch tabs) still work.
 			if (
 				e.key >= "1" &&
 				e.key <= "9" &&
@@ -405,13 +241,37 @@ export function VariantMenu({
 			ref={menuRef}
 			role="menu"
 			style={{
-				...menuStyle,
+				position: "fixed",
+				zIndex: 1000,
+				minWidth: 200,
+				maxWidth: 320,
+				maxHeight: "min(60vh, 480px)",
+				overflowY: "auto",
+				padding: 4,
+				background: "var(--background-primary)",
+				color: "var(--text-normal)",
+				border: "1px solid var(--background-modifier-border)",
+				borderRadius: "var(--radius-m, 8px)",
+				boxShadow: "var(--shadow-s, 0 8px 24px rgba(0, 0, 0, 0.25))",
+				fontSize: "var(--font-ui-small, 13px)",
+				fontFamily: "var(--font-interface)",
+				outline: "none",
+				animation: "ccb-menu-in 80ms ease-out",
+				transformOrigin: "top left",
 				left: position.left,
 				top: position.top,
 				visibility: position.visible ? "visible" : "hidden",
 			}}
 		>
-			<div ref={trapRef} tabIndex={-1} style={trapStyle} />
+			<div
+				ref={trapRef}
+				tabIndex={-1}
+				style={{
+					position: "absolute",
+					opacity: 0,
+					pointerEvents: "none",
+				}}
+			/>
 			{rows.map((row, idx) => (
 				<MenuItem
 					key={`${row.char}-${idx}`}
@@ -431,77 +291,3 @@ export function VariantMenu({
 		</div>
 	);
 }
-
-interface MenuItemProps {
-	row: MenuRow;
-	index: number;
-	isActive: boolean;
-	isFocused: boolean;
-	onHover: () => void;
-	onClick: () => void;
-}
-
-const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuItem(
-	{ row, index, isActive, isFocused, onHover, onClick },
-	ref,
-) {
-	const iconSource =
-		row.svgSource || (row.char === "" ? DEFAULT_SVG_EMPTY : "");
-	const showNumber = index < 9;
-
-	return (
-		<div
-			ref={ref}
-			role="menuitem"
-			tabIndex={-1}
-			data-ccb-menu-idx={index}
-			onMouseMove={onHover}
-			onClick={(e) => {
-				e.preventDefault();
-				e.stopPropagation();
-				onClick();
-			}}
-			style={{
-				...itemStyle,
-				...(isFocused ? itemFocusedStyle : null),
-			}}
-		>
-			<span
-				style={{
-					...numberBadgeBase,
-					...(showNumber ? null : numberBadgeEmpty),
-					...(isFocused ? numberBadgeFocused : null),
-				}}
-			>
-				{showNumber ? index + 1 : ""}
-			</span>
-			<span
-				style={{
-					...itemIconStyle,
-					color: row.color || itemIconStyle.color,
-				}}
-			>
-				<SafeSvg source={iconSource} fallback={row.char} />
-			</span>
-			<span
-				style={{
-					...itemLabelStyle,
-					...(isActive ? itemLabelActive : null),
-				}}
-			>
-				{row.label}
-			</span>
-			<span style={itemCharStyle}>
-				{row.char === "" ? " " : row.char}
-			</span>
-			<span
-				style={{
-					...itemCheckBase,
-					...(isActive ? itemCheckActive : null),
-				}}
-			>
-				<SafeSvg source={DEFAULT_SVG_CHECK} />
-			</span>
-		</div>
-	);
-});
