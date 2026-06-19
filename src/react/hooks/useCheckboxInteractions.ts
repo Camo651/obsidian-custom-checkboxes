@@ -9,6 +9,8 @@ interface CheckboxInteractionCallbacks {
 		ev: MouseEvent | PointerEvent,
 		dragMode: boolean,
 	) => void;
+	/** 1-9 digit pressed during a long-press hold (before the menu opens) — pick that row directly. */
+	onQuickPick: (digit: number) => void;
 }
 
 /**
@@ -30,12 +32,23 @@ export function useCheckboxInteractions(
 
 		let timer: number | null = null;
 		let longPressFired = false;
+		let quickPickKey:
+			| ((kev: KeyboardEvent) => void)
+			| null = null;
+
+		const removeQuickPick = () => {
+			if (quickPickKey) {
+				document.removeEventListener("keydown", quickPickKey, true);
+				quickPickKey = null;
+			}
+		};
 
 		const clear = () => {
 			if (timer !== null) {
 				window.clearTimeout(timer);
 				timer = null;
 			}
+			removeQuickPick();
 		};
 
 		const swallow = (ev: Event) => {
@@ -55,8 +68,23 @@ export function useCheckboxInteractions(
 			) {
 				return;
 			}
-			timer = window.setTimeout(() => {
+
+			quickPickKey = (kev: KeyboardEvent) => {
+				if (kev.metaKey || kev.ctrlKey || kev.altKey) return;
+				if (kev.key < "1" || kev.key > "9") return;
+				kev.preventDefault();
+				kev.stopPropagation();
+				kev.stopImmediatePropagation();
 				longPressFired = true;
+				clear();
+				cbRef.current.onQuickPick(parseInt(kev.key, 10));
+			};
+			document.addEventListener("keydown", quickPickKey, true);
+
+			timer = window.setTimeout(() => {
+				timer = null;
+				longPressFired = true;
+				removeQuickPick();
 				cbRef.current.onOpenMenu(ev, true);
 			}, LONG_PRESS_MS);
 		};

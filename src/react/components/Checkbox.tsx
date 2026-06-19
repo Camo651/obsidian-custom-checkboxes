@@ -52,6 +52,16 @@ export function Checkbox({ initialChar, target }: CheckboxProps) {
 				},
 			});
 		},
+		onQuickPick: (digit) => {
+			const rows: string[] = [""];
+			for (const v of settings.variants) {
+				if (v.character !== "") rows.push(v.character);
+			}
+			const next = rows[digit - 1];
+			if (next === undefined) return;
+			setChar(next);
+			void checkboxService.writeChar(target, next);
+		},
 	});
 
 	return <CheckboxIcon ref={ref} char={char} variant={variant} />;
