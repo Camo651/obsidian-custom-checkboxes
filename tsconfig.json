@@ -2,7 +2,7 @@
   "compilerOptions": {
     "inlineSourceMap": true,
     "inlineSources": true,
-    "module": "ESNext",
+    "module": "Node16",
     "target": "ES2018",
     "allowJs": true,
     "noImplicitAny": true,
