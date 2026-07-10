@@ -43,11 +43,3 @@ Obsidian recognizes any single character between `[ ]` as a task marker — e.g.
 | **Default 'checked' character** | What an empty box becomes when short-clicked. Default `x`. |
 | **Enable in Reading view** | Toggle the reading-view post-processor. Restart Obsidian after changing. |
 | **Enable in Live Preview / Source** | Toggle the live-preview integration. Restart Obsidian after changing. |
-
-## Development
-
-```bash
-npm install            # install deps (uses --legacy-peer-deps for React)
-npm run dev            # esbuild watch
-npm run build          # tsc + esbuild production
-```
