@@ -1,4 +1,4 @@
-name: Publish release on main->release merge
+name: Publish release (Merge main -> release)
 
 on:
   pull_request:
