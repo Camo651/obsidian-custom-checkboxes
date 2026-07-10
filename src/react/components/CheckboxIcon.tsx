@@ -3,7 +3,7 @@ import {
 	type CheckboxVariant,
 } from "../../types";
 import { SafeSvg } from "./SafeSvg";
-import { DEFAULT_SVG_EMPTY } from "src/icons";
+import { DEFAULT_SVG_EMPTY } from "../../icons";
 
 interface CheckboxIconProps {
 	char: string;

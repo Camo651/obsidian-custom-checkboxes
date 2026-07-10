@@ -1,7 +1,7 @@
 {
   "id": "custom-checkboxes",
   "name": "Custom Checkboxes",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "1.0.0",
   "description": "Configure custom checkbox variants with custom SVG icons.",
   "author": "Camo651",

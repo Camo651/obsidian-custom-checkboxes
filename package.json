@@ -1,6 +1,6 @@
 {
   "name": "obsidian-custom-checkboxes",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Configure custom checkbox variants with custom SVG icons.",
   "main": "main.js",
   "scripts": {

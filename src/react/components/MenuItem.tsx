@@ -1,5 +1,5 @@
 import { type CSSProperties, forwardRef } from "react";
-import { DEFAULT_SVG_CHECK, DEFAULT_SVG_EMPTY } from "src/icons";
+import { DEFAULT_SVG_CHECK, DEFAULT_SVG_EMPTY } from "../../icons";
 import { SafeSvg } from "./SafeSvg";
 
 /**

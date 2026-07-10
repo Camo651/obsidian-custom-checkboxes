@@ -12,7 +12,7 @@ import { useSettings } from "../hooks/useSettings";
 import { SettingItem } from "./SettingItem";
 import { Toggle } from "./Toggle";
 import { VariantCard } from "./VariantCard";
-import { DEFAULT_SVG_CHECK } from "src/icons";
+import { DEFAULT_SVG_CHECK } from "../../icons";
 
 const variantListStyle: CSSProperties = {
 	display: "flex",
